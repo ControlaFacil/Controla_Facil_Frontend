@@ -1,0 +1,26 @@
+:root {
+    --blueControlafacil: #0C3447;
+    --greenControlafacil: #5FC16C;
+    --white: #FFFFFF;
+    --black: #000000;
+    --gelo: #f8f9fb;
+    --card-bg: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--gelo);
+    color: var(--black);
+    -webkit-font-smoothing: antialiased;
+}
+
+body, input, textarea, button {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+}

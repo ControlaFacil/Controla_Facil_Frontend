@@ -1,0 +1,81 @@
+.formSection {
+  background-color: var(--card-bg, #fff);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 600px;
+  margin: 2rem auto;
+  transition: all 0.3s ease;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--dark-gray, #333);
+}
+
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--medium-gray, #ddd);
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: var(--primary-color, #5FC16C);
+  box-shadow: 0 0 0 3px rgba(95, 193, 108, 0.2);
+}
+
+.actionBtn {
+  background-color: var(--primary-color, #5FC16C);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.actionBtn:hover {
+  background-color: #4dae5a;
+}
+
+.pageTitle {
+  text-align: center;
+  font-size: 1.75rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: var(--dark-gray, #333);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .formSection {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+
+  .formGroup input,
+  .formGroup select {
+    font-size: 0.95rem;
+  }
+
+  .actionBtn {
+    width: 100%;
+    padding: 0.75rem;
+  }
+}
