@@ -1,4 +1,4 @@
-import styles from './style/DashboardEstoque.module.css';
+import styles from './style/DashBoardEstoque.module.css';
 
 export function DashboardEstoque() {
   return (
