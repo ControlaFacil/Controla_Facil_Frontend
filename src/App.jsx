@@ -7,6 +7,8 @@ import { MeusDados } from "./components/MeusDados";
 import { CadastroParceiro } from "./components/CadastroParceiro";
 import { CadastroProduto } from "./components/CadastroProduto";
 import { Estoque } from "./components/Estoque";
+import IntegracaoSucesso from "./components/IntegracaoSucesso";
+import IntegracaoErro from "./components/IntegracaoErro";
 import './global.css';
 
 function LayoutWithHeader() {
@@ -24,6 +26,14 @@ function LayoutWithHeader() {
         <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />
         <Route path="/cadastro-produto" element={<CadastroProduto />} />
         <Route path="/estoque" element={<Estoque />} />
+        <Route
+          path="/integracao-sucesso"
+          element={<IntegracaoSucesso onGoHome={() => window.location.href = '/home'} />}
+        />
+        <Route
+          path="/integracao-erro"
+          element={<IntegracaoErro onGoHome={() => window.location.href = '/home'} />}
+        />
       </Routes>
     </>
   );

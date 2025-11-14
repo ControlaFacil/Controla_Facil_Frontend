@@ -2,7 +2,7 @@
 import React from 'react';
 import './style/SuccessPage.css';
 
-export default function SuccessPage({ onGoHome }) {
+export default function IntegracaoSucesso({ onGoHome }) {
   return (
     <div className="success-container">
       <h1>Integração realizada com sucesso!</h1>

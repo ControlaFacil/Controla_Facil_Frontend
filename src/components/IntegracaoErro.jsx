@@ -2,7 +2,7 @@
 import React from 'react';
 import './style/ErrorPage.css';
 
-export default function ErrorPage({ onGoHome }) {
+export default function IntegracaoErro({ onGoHome }) {
   return (
     <div className="error-container">
       <h1>Ocorreu um erro na integração!</h1>
