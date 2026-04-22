@@ -1,45 +1,202 @@
+/* --- Variáveis CSS (Padrão Unificado) --- */
+:root {
+    --primary-color: #5FC16C; /* greenControlafacil */
+    --primary-hover-color: #4CAF5A; 
+    --dark-blue-grey: #0C3447; /* blueControlafacil */
+    --light-grey-bg: #f8f9fb; /* gelo */
+    --text-color-dark: #333;
+    --text-color-light: #f8f9fa;
+    --border-color: #e0e0e0;
+    --input-disabled-bg: #f3f4f6; /* Cor mais clara para indicar desabilitado */
+    --input-active-bg: #fff; /* Fundo branco para edição */
+    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    --border-radius: 8px;
+    --error-color: #e74c3c; /* Vermelho para cancelar/erro */
+}
+
+/* --- Layout Principal --- */
 .container {
-  display: flex;
-  justify-content: center;
-  padding: 2rem;
-  background-color: #f4f5f7;
-  min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+    background-color: var(--light-grey-bg);
+    min-height: calc(100vh - 65px);
 }
 
 .formWrapper {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 900px;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    width: 100%;
+    max-width: 900px;
+    margin: 20px 0;
+}
+
+/* --- Cabeçalho do Formulário (Título e Botões) --- */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
 }
 
 .title {
-  font-size: 1.75rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  text-align: center;
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--dark-blue-grey);
+    margin: 0;
 }
 
 .subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: var(--dark-blue-grey);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 5px;
+}
+
+/* --- Estrutura de Grid para Inputs --- */
+.dataGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Divide em 2 colunas iguais */
+    gap: 20px 30px; /* Espaçamento entre linhas e colunas */
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Faz com que o campo ocupe as duas colunas */
+.formGroupFull {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
 }
 
 .label {
-  font-weight: 500;
-  margin-top: 0.5rem;
+    font-size: 0.9em;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #555;
 }
 
+/* --- Estilo de Input --- */
 .input {
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  color: #333;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    color: var(--text-color-dark);
+    font-size: 1em;
+    font-weight: 500;
+    transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Estilo para inputs DESABILITADOS (Visualização) */
+.input:disabled {
+    background-color: var(--input-disabled-bg); /* Cor clara de desabilitado */
+    cursor: default; /* Indica que não é clicável/editável */
+    border-color: var(--border-color);
+}
+
+/* Estilo para inputs HABILITADOS (Edição) */
+.input:not(:disabled) {
+    background-color: var(--input-active-bg);
+    border-color: #a0a0a0;
+}
+.input:not(:disabled):focus,
+.input:not(:disabled) select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(95, 193, 108, 0.3);
+}
+
+/* --- Botões de Ação --- */
+.buttonContainer {
+    display: flex;
+    gap: 10px;
+}
+
+.editBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    text-transform: uppercase;
+}
+
+.editBtn svg {
+    margin-right: 0;
+}
+
+.editBtn:hover {
+    background-color: var(--primary-hover-color);
+}
+.editBtn:active {
+    transform: scale(0.98);
+}
+
+.cancelBtn {
+    background-color: #95a5a6; /* Cinza suave para cancelar */
+}
+.cancelBtn:hover {
+    background-color: #7f8c8d;
+}
+.cancelBtn svg {
+    color: var(--error-color); /* Ícone vermelho no botão de cancelamento */
+}
+
+.saveBtn {
+    background-color: var(--primary-color);
+}
+
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    .formWrapper {
+        padding: 20px;
+    }
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .title {
+        font-size: 1.5em;
+        margin-bottom: 10px;
+    }
+    .buttonContainer {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .dataGrid {
+        grid-template-columns: 1fr; /* Stack em telas pequenas */
+        gap: 15px;
+    }
+    .formGroupFull {
+        grid-column: span 1; /* Ocupa apenas 1 coluna */
+    }
+    .subtitle {
+        font-size: 1.1em;
+    }
+    .editBtn {
+        padding: 10px 15px;
+        font-size: 0.8em;
+    }
 }

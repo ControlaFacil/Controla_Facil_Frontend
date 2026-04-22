@@ -1,15 +1,17 @@
+// Arquivo: vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000', // Onde sua API roda
+        // CORRIGIDO: Deve ser apenas a URL base sem /api-docs/
+        target: 'https://controlafacilbackend-production.up.railway.app', 
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api') // Mantém o /api no path
+        // Mantém o '/api' no path enviado ao backend (ex: /api/usuarios)
+        rewrite: (path) => path.replace(/^\/api/, '/api') 
       }
     }
   }

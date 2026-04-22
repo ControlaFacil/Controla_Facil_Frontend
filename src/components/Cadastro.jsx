@@ -1,320 +1,300 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./style/Cadastro.module.css";
-import logo from "../assets/logo.controlafacil.jpg";
+import { CheckCircle, Shield, Headset } from 'lucide-react'; 
+import { ToastContainer, toast } from 'react-toastify';
+
+const maskCpf = (value) => {
+    const cleanValue = value.replace(/\D/g, "");
+    const limitedValue = cleanValue.substring(0, 11);
+
+    return limitedValue.replace(
+        /^(\d{3})(\d{3})(\d{3})(\d{2})$/,
+        "$1.$2.$3-$4"
+    );
+};
+
+const maskCelular = (value) => {
+    const cleanValue = value.replace(/\D/g, "");
+    const limitedValue = cleanValue.substring(0, 11);
+
+    if (limitedValue.length <= 10) {
+        return limitedValue.replace(
+            /^(\d{2})(\d{4})(\d{4})$/,
+            "($1) $2-$3"
+        );
+    } else {
+        return limitedValue.replace(
+            /^(\d{2})(\d{5})(\d{4})$/,
+            "($1) $2-$3"
+        );
+    }
+};
 
 export function Cadastro() {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+    const navigate = useNavigate();
+    const [step, setStep] = useState(1); 
 
-  const [usuario, setUsuario] = useState({
-    nomeEmpresa: "",
-    cnpj: "",
-    telefone: "",
-    email: "",
-    senha: "",
-    confirmarSenha: ""
-  });
+    const [usuario, setUsuario] = useState({
+        nome: "", 
+        cpf: "", 
+        celular: "", 
+        cargo: "Padrão", 
+        email: "",
+        senha: "",
+        confirmarSenha: ""
+    });
 
-  const [endereco, setEndereco] = useState({
-    rua: "",
-    numero: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-    cep: "",
-    complemento: ""
-  });
+    const handleChange = (e, setter) => {
+        const { name, value } = e.target;
+        let newValue = value;
 
-  const handleChange = (e, setter) => {
-    const { name, value } = e.target;
-    setter(prev => ({
-      ...prev,
-      [name]: name === "numero" ? (value ? parseInt(value, 10) : null) : value
-    }));
-  };
-
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (usuario.senha !== usuario.confirmarSenha) {
-      alert("As senhas não coincidem.");
-      return;
-    }
-
-    try {
-      console.log("📤 Enviando dados do endereço:", endereco);
-
-      const enderecoRes = await fetch("/api/endereco", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(endereco)
-      });
-
-      const enderecoText = await enderecoRes.text();
-      const enderecoData = enderecoText ? JSON.parse(enderecoText) : {};
-
-      if (!enderecoRes.ok) {
-        let erroEndereco = "Erro ao cadastrar endereço.";
-        try {
-          const json = JSON.parse(enderecoText);
-          erroEndereco = json.message || erroEndereco;
-        } catch {
-          erroEndereco = enderecoText || erroEndereco;
+        switch (name) {
+            case "cpf":
+                newValue = maskCpf(value);
+                break;
+            case "celular": 
+                newValue = maskCelular(value);
+                break;
+            default:
+                break;
         }
-        alert(erroEndereco);
-        return;
-      }
 
-      if (!enderecoData.endereco || !enderecoData.endereco.id) {
-        alert("Erro: ID do endereço não retornado.");
-        return;
-      }
+        setter(prev => ({
+            ...prev,
+            [name]: newValue
+        }));
+    };
 
-      const idEndereco = enderecoData.endereco.id;
-
-      const usuarioPayload = {
-        cnpj: usuario.cnpj.replace(/\D/g, ""),
-        razaoSocial: usuario.nomeEmpresa,
-        apelidoEmpresa: usuario.nomeEmpresa,
-        email: usuario.email,
-        telefone: usuario.telefone.replace(/\D/g, ""),
-        senha: usuario.senha,
-        endereco: idEndereco
-      };
-
-      console.log("📤 Enviando dados do usuário com endereço:", usuarioPayload);
-
-      const usuarioRes = await fetch("/api/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(usuarioPayload)
-      });
-
-      const rawUsuarioText = await usuarioRes.text();
-      const usuarioData = rawUsuarioText ? JSON.parse(rawUsuarioText) : {};
-
-      console.log("📥 Resposta do cadastro de usuário:", usuarioData);
-
-      if (!usuarioRes.ok) {
-        let erroUsuario = "Erro ao cadastrar usuário.";
-        try {
-          const json = JSON.parse(rawUsuarioText);
-          erroUsuario = json.message || erroUsuario;
-        } catch {
-          erroUsuario = rawUsuarioText || erroUsuario;
+    const handleNext = () => {
+        if (step === 1) {
+            console.log("--- Executando validação da Etapa 1 (Usuário) ---");
+            if (!usuario.nome || !usuario.cpf || !usuario.celular) {
+                toast.error("Preencha todos os campos obrigatórios da Etapa 1.");
+                console.log("Validação falhou: Campos vazios na Etapa 1.");
+                return;
+            }
+            if (usuario.cpf.replace(/\D/g, "").length !== 11) {
+                toast.error("O CPF deve ter 11 dígitos.");
+                console.log("Validação falhou: CPF incompleto.");
+                return;
+            }
+            if (usuario.celular.replace(/\D/g, "").length < 10) {
+                toast.error("O celular deve ter no mínimo 10 dígitos (DDD + 8 ou 9 dígitos).");
+                console.log("Validação falhou: Celular incompleto.");
+                return;
+            }
         }
-        alert(erroUsuario);
-        return;
-      }
-
-      const idUsuario =
-        usuarioData.idUsuario?.id ||
-        usuarioData.usuario?.id ||
-        usuarioData.id ||
-        usuarioData.data?.id ||
-        null;
-
-
-      if (!idUsuario) {
-        alert("Erro: ID do usuário não retornado.");
-        return;
-      }
-
-      console.log("🔗 Vinculando endereço ao usuário...", {
-        idUsuario,
-        idEndereco
-      });
-
-      const vinculoRes = await fetch("/api/endereco/vincular-usuario", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idUsuario,
-          idEndereco
-        })
-      });
-
-      const vinculoText = await vinculoRes.text();
-      const vinculoData = vinculoText ? JSON.parse(vinculoText) : {};
-
-      if (!vinculoRes.ok) {
-        let erroVinculo = "Erro ao vincular endereço ao usuário.";
-        try {
-          const json = JSON.parse(vinculoText);
-          erroVinculo = json.message || erroVinculo;
-        } catch {
-          erroVinculo = vinculoText || erroVinculo;
+        
+        if (step < 2) { 
+            console.log(`Etapa ${step} validada. Avançando para a Etapa ${step + 1}.`);
+            setStep(step + 1);
         }
-        alert(erroVinculo);
-        return;
-      }
+    };
 
-      const loginRes = await fetch("/api/usuarios/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: usuario.email,
-          senha: usuario.senha
-        })
-      });
+    const handlePrev = () => {
+        if (step > 1) {
+            console.log(`Voltando para a Etapa ${step - 1}.`);
+            setStep(step - 1);
+        }
+    };
+    
+    const stepSubtitle = useMemo(() => {
+        switch (step) {
+            case 1:
+                return "Seus dados pessoais (CPF e contato)";
+            case 2:
+                return "Defina seu e-mail e senha de acesso";
+            default:
+                return "";
+        }
+    }, [step]);
 
-      const loginText = await loginRes.text();
-      const loginData = loginText ? JSON.parse(loginText) : {};
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        console.log("--- Executando validação da Etapa Final (Acesso) ---");
 
-      if (!loginRes.ok || !loginData.usuario || !loginData.usuario.id) {
-        alert("Erro ao fazer login automático. Tente manualmente.");
-        return;
-      }
+        if (usuario.senha !== usuario.confirmarSenha) {
+            toast.error("As senhas não coincidem.");
+            console.log("Validação falhou: Senhas não coincidem.");
+            return;
+        }
+        if (!usuario.email || !usuario.senha) {
+            toast.error("Preencha todos os campos obrigatórios de Acesso.");
+            console.log("Validação falhou: E-mail ou Senha vazios.");
+            return;
+        }
 
-      alert("Cadastro e login realizados com sucesso!");
-      navigate("/home");
+        const usuarioPayload = {
+            nome: usuario.nome,
+            email: usuario.email,
+            cpf: usuario.cpf.replace(/\D/g, ""), 
+            celular: usuario.celular.replace(/\D/g, ""), 
+            cargo: usuario.cargo, 
+            senha: usuario.senha,
+        };
+        
+        console.log("✅ Payload final para /api/usuarios:", usuarioPayload);
+        console.log("Enviando requisição SEM Authorization header.");
 
-    } catch (err) {
-      console.error("🔥 Erro inesperado:", err);
-      alert("Erro inesperado. Verifique o console.");
-    }
-  };
+        try {
+            toast.info("Cadastrando usuário...");
+            
+            const usuarioRes = await fetch("/api/usuarios", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(usuarioPayload)
+            });
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.leftSide}>
-        <div className={styles.steps}>
-          <div className={step === 1 ? styles.stepActive : styles.step}>Empresa</div>
-          <div className={styles.line}></div>
-          <div className={step === 2 ? styles.stepActive : styles.step}>Endereço</div>
-          <div className={styles.line}></div>
-          <div className={step === 3 ? styles.stepActive : styles.step}>Cadastro</div>
+            let usuarioData = {};
+            let rawUsuarioText = "";
+            try {
+                const cloneRes = usuarioRes.clone(); 
+                rawUsuarioText = await cloneRes.text();
+                usuarioData = JSON.parse(rawUsuarioText);
+            } catch (err) {
+            }
+            
+            console.log(`Resposta bruta (status ${usuarioRes.status}):`, rawUsuarioText);
+
+            if (!usuarioRes.ok) {
+                let erroUsuario = "Erro ao cadastrar usuário.";
+                
+                if (usuarioData.message) {
+                    erroUsuario = usuarioData.message;
+                    console.log("Erro de API (JSON):", usuarioData);
+                } else if (usuarioRes.status === 400 && rawUsuarioText) {
+                     erroUsuario = JSON.parse(rawUsuarioText).error || "Erro de validação.";
+                     console.log("Erro de validação:", erroUsuario);
+                } else {
+                    erroUsuario = "Erro de conexão/servidor. Verifique os logs do backend.";
+                    console.log("Erro de API (Texto/HTML). Status:", usuarioRes.status, "Texto:", rawUsuarioText.substring(0, 50) + "...");
+                }
+                
+                toast.error(erroUsuario);
+                return;
+            }
+            
+            console.log("✅ Cadastro de usuário bem-sucedido. Dados retornados:", usuarioData);
+
+            toast.success("Cadastro realizado com sucesso! Faça login para continuar.");
+            navigate("/");
+
+        } catch (err) {
+            console.error("Erro inesperado durante o fetch:", err);
+            toast.error("Erro inesperado. Verifique o console.");
+        }
+    };
+
+    const isCompleted = (stepNumber) => step > stepNumber;
+    const isActive = (stepNumber) => step === stepNumber;
+    const isConnectorActive = (stepNumber) => step >= stepNumber + 1;
+
+
+    return (
+        <div className={styles['registration-container']}>
+            <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+            <div className={styles['registration-branding']}>
+                <h1>Controla Fácil</h1>
+                <p>Seu Gerenciamento de Logística Começa Aqui!</p>
+                <div className={styles['branding-features']}>
+                    <p>
+                        <CheckCircle size={18} className={styles.iconFeature} /> Rápido e Intuitivo
+                    </p>
+                    <p>
+                        <Shield size={18} className={styles.iconFeature} /> Seguro e Confiável
+                    </p>
+                    <p>
+                        <Headset size={18} className={styles.iconFeature} /> Suporte Dedicado
+                    </p>
+                </div>
+            </div>
+
+            <div className={styles['registration-form-area']}>
+                
+                <div className={styles.stepper}>
+                    <div className={`${styles.step} ${isActive(1) ? styles.active : ''} ${isCompleted(1) ? styles.completed : ''}`} data-step="1">
+                        <span className={styles['step-number']}>
+                            {isCompleted(1) ? <CheckCircle size={16} /> : 1} 
+                        </span>
+                        <span className={styles['step-label']}>Usuário</span> 
+                    </div>
+                    <div className={`${styles['step-connector']} ${isConnectorActive(1) ? styles.active : ''}`}></div> 
+
+                    <div className={`${styles.step} ${isActive(2) ? styles.active : ''} ${isCompleted(2) ? styles.completed : ''}`} data-step="2">
+                        <span className={styles['step-number']}>
+                            {isCompleted(2) ? <CheckCircle size={16} /> : 2}
+                        </span>
+                        <span className={styles['step-label']}>Acesso</span> 
+                    </div>
+                </div>
+
+                <form id="registrationForm" onSubmit={handleSubmit}>
+                    <div className={styles['form-header']}>
+                        <h2>Crie sua conta</h2>
+                        <p className={styles['step-subtitle']}>{stepSubtitle}</p>
+                    </div>
+
+                    <div className={`${styles['form-step']} ${isActive(1) ? styles['current-step'] : ''}`} id="step1">
+                        <div className={styles['input-group']}>
+                            <label htmlFor="nome">Nome Completo:</label>
+                            {/* Alterado para 'nome' */}
+                            <input type="text" id="nome" name="nome" value={usuario.nome} onChange={(e) => handleChange(e, setUsuario)} required />
+                        </div>
+                        <div className={styles['input-group']}>
+                            <label htmlFor="cpf">CPF:</label>
+                            <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" value={usuario.cpf} onChange={(e) => handleChange(e, setUsuario)} required maxLength={14} inputMode="numeric" /> 
+                        </div>
+                        <div className={styles['input-group']}>
+                            <label htmlFor="celular">Celular:</label>
+                            <input type="tel" id="celular" name="celular" placeholder="(00) 00000-0000" value={usuario.celular} onChange={(e) => handleChange(e, setUsuario)} required maxLength={15} inputMode="tel" />
+                        </div>
+                        <div className={styles['input-group']} style={{display: 'none'}}> 
+                            <input type="hidden" name="cargo" value={usuario.cargo} />
+                        </div>
+                    </div>
+
+                    <div className={`${styles['form-step']} ${isActive(2) ? styles['current-step'] : ''}`} id="step3">
+                        <div className={styles['input-group']}>
+                            <label htmlFor="email">E-mail:</label>
+                            <input type="email" id="email" name="email" value={usuario.email} onChange={(e) => handleChange(e, setUsuario)} required />
+                        </div>
+                        <div className={styles['input-group']}>
+                            <label htmlFor="senha">Senha:</label>
+                            <input type="password" id="senha" name="senha" value={usuario.senha} onChange={(e) => handleChange(e, setUsuario)} required />
+                        </div>
+                        <div className={styles['input-group']}>
+                            <label htmlFor="confirmarSenha">Confirmar senha:</label>
+                            <input type="password" id="confirmarSenha" name="confirmarSenha" value={usuario.confirmarSenha} onChange={(e) => handleChange(e, setUsuario)} required />
+                        </div>
+                    </div>
+
+                    <div className={styles['navigation-buttons']}>
+                        {step > 1 && (
+                            <button type="button" id="prevBtn" className={styles['btn-secondary']} onClick={handlePrev}>
+                                Voltar
+                            </button>
+                        )}
+                        {step < 2 && ( 
+                            <button type="button" id="nextBtn" className={styles['btn-primary']} onClick={handleNext}>
+                                Próximo
+                            </button>
+                        )}
+                        {step === 2 && ( 
+                            <button type="submit" id="submitBtn" className={styles['btn-primary']}>
+                                Finalizar Cadastro
+                            </button>
+                        )}
+                    </div>
+                </form>
+
+                <div className={styles['login-link']}>
+                    <p>Já tem uma conta? <a href="/">Faça login aqui</a></p>
+                </div>
+                <p className={styles['app-version']}>v1.0.0</p>
+            </div>
         </div>
-
-        <form className={styles.card} onSubmit={handleSubmit}>
-          <h2 className={styles.title}>Crie sua conta</h2>
-          <h2 className={styles.subtitle}>
-            {step === 1
-              ? "Dados da empresa"
-              : step === 2
-                ? "Endereço da empresa"
-                : "Cadastro de acesso"}
-          </h2>
-
-          {step === 1 && (
-            <>
-              <label className={styles.label}>Razão Social:</label>
-              <input type="text" name="nomeEmpresa" value={usuario.nomeEmpresa} onChange={(e) => handleChange(e, setUsuario)} className={styles.input} />
-              <label className={styles.label}>CNPJ:</label>
-              <input type="text" name="cnpj" value={usuario.cnpj} onChange={(e) => handleChange(e, setUsuario)} className={styles.input} />
-              <label className={styles.label}>Telefone:</label>
-              <input type="text" name="telefone" value={usuario.telefone} onChange={(e) => handleChange(e, setUsuario)} className={styles.input} />
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <label className={styles.label}>Rua:</label>
-              <input type="text" name="rua" value={endereco.rua} onChange={(e) => handleChange(e, setEndereco)} className={styles.input} />
-
-              <label className={styles.label}>Número:</label>
-              <input type="text" name="numero" value={endereco.numero} onChange={(e) => handleChange(e, setEndereco)} className={styles.input} />
-
-              <label className={styles.label}>Bairro:</label>
-              <input type="text" name="bairro" value={endereco.bairro} onChange={(e) => handleChange(e, setEndereco)} className={styles.input} />
-
-              <label className={styles.label}>Cidade:</label>
-              <input type="text" name="cidade" value={endereco.cidade} onChange={(e) => handleChange(e, setEndereco)} className={styles.input} />
-
-              <label className={styles.label}>Estado:</label>
-              <select
-                name="estado"
-                value={endereco.estado}
-                onChange={(e) => handleChange(e, setEndereco)}
-                className={styles.input}
-              >
-                <option value="">Selecione um estado</option>
-                <option value="AC">AC</option>
-                <option value="AL">AL</option>
-                <option value="AP">AP</option>
-                <option value="AM">AM</option>
-                <option value="BA">BA</option>
-                <option value="CE">CE</option>
-                <option value="DF">DF</option>
-                <option value="ES">ES</option>
-                <option value="GO">GO</option>
-                <option value="MA">MA</option>
-                <option value="MT">MT</option>
-                <option value="MS">MS</option>
-                <option value="MG">MG</option>
-                <option value="PA">PA</option>
-                <option value="PB">PB</option>
-                <option value="PR">PR</option>
-                <option value="PE">PE</option>
-                <option value="PI">PI</option>
-                <option value="RJ">RJ</option>
-                <option value="RN">RN</option>
-                <option value="RS">RS</option>
-                <option value="RO">RO</option>
-                <option value="RR">RR</option>
-                <option value="SC">SC</option>
-                <option value="SP">SP</option>
-                <option value="SE">SE</option>
-                <option value="TO">TO</option>
-              </select>
-
-              <label className={styles.label}>CEP:</label>
-              <input
-                type="text"
-                name="cep"
-                value={endereco.cep}
-                onChange={(e) => {
-                  const onlyNumbers = e.target.value.replace(/\D/g, "");
-                  setEndereco((prev) => ({
-                    ...prev,
-                    cep: onlyNumbers
-                  }));
-                }}
-                className={styles.input}
-              />
-
-              <label className={styles.label}>Complemento:</label>
-              <input type="text" name="complemento" value={endereco.complemento} onChange={(e) => handleChange(e, setEndereco)} className={styles.input} />
-            </>
-
-          )}
-
-          {step === 3 && (
-            <>
-              <label className={styles.label}>E-mail:</label>
-              <input type="email" name="email" value={usuario.email} onChange={(e) => handleChange(e, setUsuario)} className={styles.input} />
-              <label className={styles.label}>Senha:</label>
-              <input type="password" name="senha" value={usuario.senha} onChange={(e) => handleChange(e, setUsuario)} className={styles.input} />
-              <label className={styles.label}>Confirmar senha:</label>
-              <input type="password" name="confirmarSenha" value={usuario.confirmarSenha} onChange={(e) => handleChange(e, setUsuario)} className={styles.input} />
-            </>
-          )}
-
-          {step > 1 && (
-            <button type="button" className={styles.button} onClick={() => setStep(step - 1)} style={{ backgroundColor: "#d1d5db", color: "#374151", marginBottom: "8px" }}>
-              Voltar
-            </button>
-          )}
-
-          {step < 3 && (
-            <button type="button" className={styles.button} onClick={() => setStep(step + 1)}>
-              Próximo
-            </button>
-          )}
-
-          {step === 3 && (
-            <button type="submit" className={styles.button}>
-              Finalizar
-            </button>
-          )}
-        </form>
-      </div>
-
-      <div className={styles.rightSide}>
-        <img src={logo} alt="Logo" className={styles.logo} />
-      </div>
-    </div>
-  );
+    );
 }
