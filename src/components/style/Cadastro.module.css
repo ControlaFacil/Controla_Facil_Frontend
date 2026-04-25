@@ -188,12 +188,7 @@
     animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Correção para inputs de largura total (ou mais longos) como Razão Social */
-.form-step.current-step > div:nth-child(1), /* Razão Social */
-.form-step.current-step > div:nth-child(4) /* Rua (se for o quarto input na etapa 2) */
- {
-    grid-column: 1 / -1; 
-}
+
 
 /* Força o layout original em telas pequenas */
 @media (max-width: 550px) {

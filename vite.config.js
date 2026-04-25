@@ -7,10 +7,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        // CORRIGIDO: Deve ser apenas a URL base sem /api-docs/
         target: 'https://controlafacilbackend-production.up.railway.app', 
         changeOrigin: true,
-        // Mantém o '/api' no path enviado ao backend (ex: /api/usuarios)
         rewrite: (path) => path.replace(/^\/api/, '/api') 
       }
     }

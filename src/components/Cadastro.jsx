@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./style/Cadastro.module.css";
 import { CheckCircle, Shield, Headset } from 'lucide-react'; 
 import { ToastContainer, toast } from 'react-toastify';
+import { API_BASE_URL } from "../api"
 
 const maskCpf = (value) => {
     const cleanValue = value.replace(/\D/g, "");
@@ -39,7 +40,7 @@ export function Cadastro() {
         nome: "", 
         cpf: "", 
         celular: "", 
-        cargo: "Padrão", 
+        cargo: "", 
         email: "",
         senha: "",
         confirmarSenha: ""
@@ -112,35 +113,30 @@ export function Cadastro() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("--- Executando validação da Etapa Final (Acesso) ---");
 
         if (usuario.senha !== usuario.confirmarSenha) {
             toast.error("As senhas não coincidem.");
-            console.log("Validação falhou: Senhas não coincidem.");
             return;
         }
+
         if (!usuario.email || !usuario.senha) {
             toast.error("Preencha todos os campos obrigatórios de Acesso.");
-            console.log("Validação falhou: E-mail ou Senha vazios.");
             return;
         }
 
         const usuarioPayload = {
             nome: usuario.nome,
             email: usuario.email,
-            cpf: usuario.cpf.replace(/\D/g, ""), 
+            cpf_cnpj: usuario.cpf.replace(/\D/g, ""), 
             celular: usuario.celular.replace(/\D/g, ""), 
             cargo: usuario.cargo, 
             senha: usuario.senha,
         };
-        
-        console.log("✅ Payload final para /api/usuarios:", usuarioPayload);
-        console.log("Enviando requisição SEM Authorization header.");
 
         try {
             toast.info("Cadastrando usuário...");
             
-            const usuarioRes = await fetch("/api/usuarios", {
+            const usuarioRes = await fetch(`${API_BASE_URL}/usuarios`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -150,6 +146,7 @@ export function Cadastro() {
 
             let usuarioData = {};
             let rawUsuarioText = "";
+
             try {
                 const cloneRes = usuarioRes.clone(); 
                 rawUsuarioText = await cloneRes.text();
@@ -240,20 +237,24 @@ export function Cadastro() {
                     <div className={`${styles['form-step']} ${isActive(1) ? styles['current-step'] : ''}`} id="step1">
                         <div className={styles['input-group']}>
                             <label htmlFor="nome">Nome Completo:</label>
-                            {/* Alterado para 'nome' */}
                             <input type="text" id="nome" name="nome" value={usuario.nome} onChange={(e) => handleChange(e, setUsuario)} required />
                         </div>
+
+                        <div className={styles['input-group']}> 
+                            <label htmlFor="cargo">Cargo:</label>
+                            <input type='text' id="cargo" name="cargo" value={usuario.cargo} onChange={(e) => handleChange(e, setUsuario)} />
+                        </div>
+
                         <div className={styles['input-group']}>
                             <label htmlFor="cpf">CPF:</label>
                             <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" value={usuario.cpf} onChange={(e) => handleChange(e, setUsuario)} required maxLength={14} inputMode="numeric" /> 
                         </div>
+                        
                         <div className={styles['input-group']}>
                             <label htmlFor="celular">Celular:</label>
                             <input type="tel" id="celular" name="celular" placeholder="(00) 00000-0000" value={usuario.celular} onChange={(e) => handleChange(e, setUsuario)} required maxLength={15} inputMode="tel" />
                         </div>
-                        <div className={styles['input-group']} style={{display: 'none'}}> 
-                            <input type="hidden" name="cargo" value={usuario.cargo} />
-                        </div>
+
                     </div>
 
                     <div className={`${styles['form-step']} ${isActive(2) ? styles['current-step'] : ''}`} id="step3">
