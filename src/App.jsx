@@ -7,12 +7,12 @@ import { MeusDados } from "./components/MeusDados";
 import { CadastroParceiro } from "./components/CadastroParceiro";
 import { CadastroProduto } from "./components/CadastroProduto";
 import { Estoque } from "./components/Estoque";
+import { EmailConfirmation } from "./components/EmailConfirmation";
 import './global.css';
 
 function LayoutWithHeader() {
   const location = useLocation();
-  const hideHeaderOnRoutes = ["/", "/cadastro"];
-
+  const hideHeaderOnRoutes = ["/", "/cadastro", "/email-confirmacao"];
   return (
     <>
       {!hideHeaderOnRoutes.includes(location.pathname) && <HeaderU />}
@@ -24,6 +24,7 @@ function LayoutWithHeader() {
         <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />
         <Route path="/cadastro-produto" element={<CadastroProduto />} />
         <Route path="/estoque" element={<Estoque />} />
+        <Route path="/email-confirmacao" element={<EmailConfirmation />} />
       </Routes>
     </>
   );
