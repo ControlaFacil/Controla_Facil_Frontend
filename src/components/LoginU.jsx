@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "./style/LoginU.module.css";
+import { API_BASE_URL } from "../api"
 
 export function LoginU() {
   const navigate = useNavigate();
@@ -13,36 +14,28 @@ export function LoginU() {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    console.log("-----------------------------------------");
-    console.log("🚀 INÍCIO: Tentativa de Login");
     
     setIsLoading(true);
     setMessage(null);
 
     try {
-      console.log("🔑 Credenciais:", { email: login, senha: "********" });
-      console.log("➡️ Enviando requisição para: /api/usuarios/login");
 
-      const response = await fetch("/api/usuarios/login", {
+      const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: login, senha: senha }),
       });
       
-      console.log(`📡 Resposta recebida. Status: ${response.status}`);
-
       let data;
+      
       try {
         const text = await response.text();
         data = text ? JSON.parse(text) : {};
-        console.log("📦 Dados da Resposta (JSON):", data);
       } catch (e) {
-        console.warn("❌ Falha ao parsear JSON. Erro:", e.message);
         data = { error: "Erro de servidor. Resposta inválida." };
       }
 
       if (!response.ok) {
-        console.log("🛑 ERRO HTTP: Resposta não OK.");
         const errorText = data.error || data.message || "Erro ao fazer login. Verifique suas credenciais.";
         setMessage({ 
           type: 'error', 
@@ -52,24 +45,17 @@ export function LoginU() {
         return;
       }
 
-      console.warn("🚧 BYPASS ATIVADO: Ignorando a falta de 'token' ou 'usuario.id' na resposta 200.");
-      
       localStorage.setItem("authToken", data.token || "DEBUG_TOKEN_PLACEHOLDER");
       localStorage.setItem("usuarioId", (data.usuario && data.usuario.id) || "DEBUG_ID_PLACEHOLDER");
-      console.log("✅ Token e ID (ou placeholders) armazenados no localStorage.");
       
       setMessage({ type: 'success', text: "Login realizado com sucesso! Redirecionando..." });
       setTimeout(() => {
-        console.log("➡️ INICIANDO REDIRECIONAMENTO para /home...");
         navigate("/home"); 
-        console.log("-----------------------------------------");
       }, 800);
 
     } catch (error) {
-      console.error("🔥 ERRO FATAL (Rede/Inesperado):", error.message);
       setMessage({ type: 'error', text: "Erro de conexão. Verifique sua rede e tente novamente." });
       setIsLoading(false);
-      console.log("-----------------------------------------");
     }
   };
 
