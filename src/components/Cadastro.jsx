@@ -177,7 +177,7 @@ export function Cadastro() {
             console.log("✅ Cadastro de usuário bem-sucedido. Dados retornados:", usuarioData);
 
             toast.success("Cadastro realizado com sucesso! Faça login para continuar.");
-            navigate("/");
+            navigate("/email-confirmacao");
 
         } catch (err) {
             console.error("Erro inesperado durante o fetch:", err);
