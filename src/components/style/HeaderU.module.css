@@ -1,310 +1,102 @@
-/* --- Variáveis CSS (Padrão Unificado) --- */
-:root {
-    --primary-color: #5FC16C; /* greenControlafacil */
-    --primary-hover-color: #4CAF5A; 
-    --dark-blue-grey: #0C3447; /* blueControlafacil */
-    --text-color-dark: #333;
-    --text-color-light: #f8f9fa;
-    --border-radius: 6px;
-    --header-height: 65px;
+.sidebar {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 260px;
+  background: #0C3447;
+  color: white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
 }
 
-/* --- Estilos do Header --- */
-.header {
-    background-color: var(--dark-blue-grey);
-    color: var(--text-color-light);
-    padding: 0 30px; 
-    height: var(--header-height);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 50;
+.sidebarBrand {
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Logo e Nome da Marca */
-.logoLink {
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    align-items: center;
+.brandLogo {
+  width: 40px; height: 40px;
+  background: #5FC16C;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
-    cursor: pointer;
-    transition: opacity 0.2s ease-in-out;
+.brandName { font-size: 1.2rem; font-weight: 700; }
+
+.sidebarNav { flex: 1; padding: 20px 15px; display: flex; flex-direction: column; gap: 8px; }
+
+.navItem {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 15px;
+  border-radius: 12px;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  transition: all 0.2s;
 }
 
-.logo:hover {
-    opacity: 0.9;
+.navItem:hover { background: rgba(255,255,255,0.05); color: white; }
+.navActive { background: #5FC16C !important; color: white !important; font-weight: 600; }
+
+.sidebarFooter { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+.footerUser { display: flex; align-items: center; gap: 12px; }
+.avatarMini { width: 36px; height: 36px; border-radius: 50%; background: #1a4a61; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.userInfo p { font-size: 0.9rem; font-weight: 600; margin: 0; }
+.userInfo span { font-size: 0.8rem; color: #5FC16C; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+
+.topbar {
+  position: fixed;
+  top: 0; left: 260px; right: 0;
+  height: 80px;
+  background: white;
+  padding: 0 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #eef2f6;
+  z-index: 90;
 }
 
-.logoImg {
-    height: 2.2rem;
-    width: auto;
+.pageTitle { font-size: 1.25rem; font-weight: 600; color: #1e293b; }
+
+.topbarActions { display: flex; align-items: center; gap: 24px; }
+.notifBtn { position: relative; color: #64748b; cursor: pointer; }
+.notifBadge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 10px; border: 2px solid white; }
+
+.userDropdownWrapper { position: relative; }
+.userTrigger { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 8px; border-radius: 12px; transition: background 0.2s; }
+.userTrigger:hover { background: #f8fafc; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0C3447; }
+.rotate { transform: rotate(180deg); }
+
+.dropdownMenu {
+  position: absolute; top: 110%; right: 0;
+  background: white; border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  padding: 8px; min-width: 180px;
+  display: flex; flex-direction: column; gap: 4px;
+  animation: slideUp 0.2s ease-out;
 }
 
-.logoText {
-    font-size: 1.35rem; 
-    font-weight: 700;
-    white-space: nowrap;
+.dropdownMenu button {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 15px; border: none; background: none;
+  width: 100%; border-radius: 10px; cursor: pointer;
+  color: #475569; font-size: 0.9rem; transition: background 0.2s;
 }
 
-/* Navegação Desktop */
-.nav {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem; 
-}
+.dropdownMenu button:hover { background: #f8fafc; color: #0C3447; }
+.logoutBtn { color: #ef4444 !important; }
 
-.navLink {
-    color: white;
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: var(--border-radius);
-    font-size: 0.95em;
-    font-weight: 500;
-    transition: background-color 0.3s, color 0.3s;
-    white-space: nowrap;
-}
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.navLink.active {
-    background-color: var(--primary-color);
-    color: var(--text-color-light);
-    font-weight: 600;
-}
-
-.navLink:hover:not(.active) {
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Perfil do Usuário */
-.userProfile {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* UI: Notificações com ponto vermelho */
-.notificationWrapper {
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-.notificationIcon {
-    color: var(--primary-color);
-    transition: color 0.2s;
-}
-.notificationIcon:hover {
-    color: #fff;
-}
-.notificationDot {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 8px;
-    height: 8px;
-    background-color: #e74c3c; /* Vermelho de alerta */
-    border-radius: 50%;
-    border: 1px solid var(--dark-blue-grey); /* Borda para contraste */
-}
-
-.userName {
-    font-size: 0.9em;
-    font-weight: 500;
-    color: var(--text-color-light);
-}
-
-.userWrapper {
-    position: relative;
-}
-
-.userIcon {
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    background-color: var(--primary-color);
-    color: white;
-    transition: background-color 0.2s, transform 0.2s;
-}
-
-.userIcon:hover {
-    background-color: var(--primary-hover-color);
-    transform: scale(1.05);
-}
-
-
-/* --- Estilos do UserMenu (Dropdown) --- */
-.userMenu {
-    position: absolute;
-    top: calc(100% + 10px); /* Ajustado para 10px */
-    right: 0;
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: var(--border-radius);
-    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
-    display: flex;
-    flex-direction: column;
-    min-width: 200px; /* Aumentado a largura mínima para melhor UI */
-    z-index: 1000;
-    padding: 5px;
-    color: var(--text-color-dark);
-}
-
-.dropdownSectionTitle {
-    font-size: 0.75em;
-    color: #999;
-    padding: 5px 12px 2px;
-    margin: 0;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.dropdownDivider {
-    border: none;
-    border-top: 1px solid #f0f0f0;
-    margin: 5px 0;
-}
-
-.menuItem {
-    padding: 10px 12px;
-    background: none;
-    border: none; /* Alterado de p para button, que é mais acessível */
-    text-align: left;
-    font-size: 0.9em;
-    color: var(--text-color-dark);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 4px;
-    margin: 0;
-}
-
-.menuItem:hover {
-    background-color: #f5f5f5;
-    color: var(--primary-color);
-}
-
-.menuItem svg {
-    color: #777;
-    transition: color 0.3s;
-}
-
-.menuItem:hover svg {
-    color: var(--primary-color);
-}
-
-.logoutItem {
-    border-top: 1px solid #f0f0f0;
-    margin-top: 5px;
-    padding-top: 10px;
-}
-.logoutItem:hover {
-    background-color: #ffeaea; 
-    color: #e74c3c;
-}
-.logoutItem:hover svg {
-    color: #e74c3c;
-}
-
-/* --- Responsividade (Ajustes para mobile) --- */
-.menuButton {
-    display: none; /* Escondido por padrão */
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    padding: 0;
-    margin-left: 10px;
-}
-
-.mobileMenuOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6); /* Overlay escuro */
-    z-index: 90; 
-    animation: fadeInOverlay 0.3s;
-}
-
-.mobileNav {
-    position: absolute;
-    top: 0;
-    right: 0; /* Menu desliza da direita */
-    width: 70%;
-    max-width: 300px;
-    height: 100%;
-    background-color: var(--dark-blue-grey);
-    padding: 20px;
-    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    animation: slideInRight 0.3s forwards;
-    z-index: 100;
-}
-.mobileNav h2 {
-    color: var(--primary-color);
-    font-size: 1.2em;
-    margin-bottom: 10px;
-    margin-top: 15px;
-}
-.mobileNav .navLink {
-    width: 100%;
-    margin: 5px 0;
-    padding: 10px 12px;
-    text-align: left;
-}
-.mobileNav .divider {
-    border: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin: 15px 0;
-}
-
-@keyframes fadeInOverlay {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-@keyframes slideInRight {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
-}
-
-
-@media (max-width: 768px) {
-    .header {
-        flex-wrap: nowrap;
-        height: var(--header-height); 
-        padding: 0 20px;
-    }
-
-    .nav {
-        display: none; 
-    }
-
-    .logoText {
-        display: none; 
-    }
-    
-    .userProfile {
-        margin-left: auto;
-    }
-
-    .userName {
-        display: none; 
-    }
-
-    .menuButton {
-        display: block; 
-    }
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebarOpen { transform: translateX(0); }
+  .topbar { left: 0; padding: 0 20px; }
+  .desktopName { display: none; }
 }

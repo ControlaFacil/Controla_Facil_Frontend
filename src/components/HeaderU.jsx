@@ -1,145 +1,108 @@
 import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import styles from './style/HeaderU.module.css';
-import controlafacilIcone from '../assets/icone.controlafacil.png';
-import { User, Bell, Menu, X } from 'lucide-react'; 
-import { UserMenu } from './UserMenu';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, User, Settings, LifeBuoy, Bell, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { API_BASE_URL } from '../api';
-
-// LINKS DE NAVEGAÇÃO REVISADOS (Todos os links agora na navegação principal)
-const PRIMARY_NAV_LINKS = [
-    { to: "/home", label: "Dashboard" },
-    { to: "/estoque", label: "Estoque" },
-    // { to: "/relatorios", label: "Relatórios" },
-    // { to: "/parceiros", label: "Parceiros" },
-    // LINKS DE CADASTRO ADICIONADOS DE VOLTA À NAV PRINCIPAL
-    { to: "/cadastro-produto", label: "Cadastrar Produto" },
-    // { to: "/cadastro-parceiro", label: "Cadastrar Parceiro" },
-];
+import styles from './style/HeaderU.module.css';
 
 export function HeaderU() {
+    const navigate = useNavigate();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [userName, setUserName] = useState('Usuário');
-    const [hasNewNotifications] = useState(true); // Simulação de notificações
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        const fetchUser = async () => {
             const token = localStorage.getItem('authToken');
             if (!token) return;
-
             try {
-                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const res = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.sucesso && data.usuario) {
-                        // Exibe apenas o primeiro nome no Header
-                        const firstName = data.usuario.nome.split(' ')[0];
-                        setUserName(firstName);
-                    }
-                }
-            } catch (error) {
-                console.error("Erro ao buscar dados do usuário:", error);
-            }
+                const data = await res.json();
+                if (data.sucesso) setUserName(data.usuario.nome.split(' ')[0]);
+            } catch (e) { /* fallback silêncioso */ }
         };
-
-        fetchUserData();
+        fetchUser();
     }, []);
 
-    function toggleUserMenu() {
-        // UX: Fecha o menu móvel se o menu do usuário for aberto/fechado
-        setIsMobileMenuOpen(false); 
-        setIsUserMenuOpen(prev => !prev);
-    }
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/');
+    };
 
-    function toggleMobileMenu() {
-        // UX: Fecha o menu do usuário se o menu móvel for aberto/fechado
-        setIsUserMenuOpen(false); 
-        setIsMobileMenuOpen(prev => !prev);
-    }
-    
-    // Função auxiliar para aplicar as classes CSS Modules
-    const getNavLinkClass = ({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`;
-    
-    // Impede o fechamento do menu ao clicar dentro da nav mobile
-    const handleMobileNavClick = (e) => {
-        e.stopPropagation();
-    };
-    
-    const handleLinkClick = () => {
-        // Fecha o menu móvel ao clicar em qualquer link
-        setIsMobileMenuOpen(false);
-    };
+    const navItems = [
+        { to: "/home", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+        { to: "/usuarios", label: "Usuários", icon: <Users size={20} /> },
+        { to: "/meus-dados", label: "Meu Perfil", icon: <User size={20} /> },
+        { to: "/configuracoes", label: "Configurações", icon: <Settings size={20} /> },
+        { to: "/suporte", label: "Suporte", icon: <LifeBuoy size={20} /> },
+    ];
 
     return (
-        <header className={styles.header}>
-            <NavLink to="/home" className={styles.logoLink}>
-                <div className={styles.logo}>
-                    <img src={controlafacilIcone} alt="Controla Fácil Logo" className={styles.logoImg} />
-                    <span className={styles.logoText}>Controla Fácil</span>
-                </div>
-            </NavLink>
-
-            {/* NAV PRINCIPAL (Desktop) */}
-            <nav className={styles.nav}>
-                {PRIMARY_NAV_LINKS.map(link => (
-                    <NavLink 
-                        key={link.to}
-                        to={link.to} 
-                        className={getNavLinkClass}
-                        end
-                    >
-                        {link.label}
-                    </NavLink>
-                ))}
-            </nav>
-            
-            {/* ÍCONES E PERFIL */}
-            <div className={styles.userProfile}>
-
-                <span className={styles.userName}>Olá, {userName}!</span>
-                
-                {/* User Menu Dropdown */}
-                <div className={styles.userWrapper}>
-                    <User size={24} className={styles.userIcon} onClick={toggleUserMenu} />
-                    {isUserMenuOpen && (
-                        // O UserMenu agora não precisa mais de secondaryLinks, pois eles estão no Header
-                        <UserMenu 
-                            onClose={toggleUserMenu} 
-                        />
-                    )}
+        <>
+            {/* Sidebar Desktop */}
+            <aside className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ''}`}>
+                <div className={styles.sidebarBrand}>
+                    <div className={styles.brandLogo}>CF</div>
+                    <span className={styles.brandName}>Controla Fácil</span>
                 </div>
 
-                {/* Botão Hamburger (Mobile only) */}
-                <button className={styles.menuButton} onClick={toggleMobileMenu}>
-                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                <nav className={styles.sidebarNav}>
+                    {navItems.map(item => (
+                        <NavLink key={item.to} to={item.to} className={({ isActive }) => 
+                            `${styles.navItem} ${isActive ? styles.navActive : ''}`
+                        } onClick={() => setIsMobileOpen(false)}>
+                            {item.icon}
+                            <span>{item.label}</span>
+                        </NavLink>
+                    ))}
+                </nav>
+
+                <div className={styles.sidebarFooter}>
+                    <div className={styles.footerUser}>
+                        <div className={styles.avatarMini}>{userName[0]}</div>
+                        <div className={styles.userInfo}>
+                            <p>{userName}</p>
+                            <span onClick={handleLogout}><LogOut size={14} /> Sair</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Topbar */}
+            <header className={styles.topbar}>
+                <button className={styles.mobileToggle} onClick={() => setIsMobileOpen(!isMobileOpen)}>
+                    {isMobileOpen ? <X /> : <Menu />}
                 </button>
-            </div>
-            
-            {/* NAV MOBILE (Integrado) */}
-            {isMobileMenuOpen && (
-                <div className={styles.mobileMenuOverlay} onClick={toggleMobileMenu}>
-                    <nav className={styles.mobileNav} onClick={handleMobileNavClick}>
-                        <h2>Menu Principal</h2>
-                        {PRIMARY_NAV_LINKS.map(link => (
-                            <NavLink 
-                                key={link.to}
-                                to={link.to} 
-                                className={getNavLinkClass}
-                                end
-                                onClick={handleLinkClick}
-                            >
-                                {link.label}
-                            </NavLink>
-                        ))}
-                    </nav>
+                
+                <h2 className={styles.pageTitle}>Painel Principal</h2>
+
+                <div className={styles.topbarActions}>
+                    <div className={styles.notifBtn}>
+                        <Bell size={20} />
+                        <span className={styles.notifBadge}>3</span>
+                    </div>
+
+                    <div className={styles.userDropdownWrapper}>
+                        <div className={styles.userTrigger} onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
+                            <div className={styles.avatar}>{userName[0]}</div>
+                            <span className={styles.desktopName}>{userName}</span>
+                            <ChevronDown size={16} className={isUserMenuOpen ? styles.rotate : ''} />
+                        </div>
+
+                        {isUserMenuOpen && (
+                            <div className={styles.dropdownMenu}>
+                                <button onClick={() => { navigate('/meus-dados'); setIsUserMenuOpen(false); }}>
+                                    <User size={16} /> Meus Dados
+                                </button>
+                                <button onClick={handleLogout} className={styles.logoutBtn}>
+                                    <LogOut size={16} /> Sair do Sistema
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            )}
-        </header>
+            </header>
+        </>
     );
 }
