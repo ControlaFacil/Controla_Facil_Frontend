@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, User, LogOut, ChevronDown, Menu, X } from 'lucide-react';
+import { LayoutDashboard, User, LogOut, ChevronDown, Menu, X, ChevronLeft, ChevronRight, Store } from 'lucide-react';
 import { API_BASE_URL } from '../api';
 import styles from './style/HeaderU.module.css';
 
-export function HeaderU() {
+export function HeaderU({ isCollapsed, onToggle }) {
     const navigate = useNavigate();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -31,8 +31,9 @@ export function HeaderU() {
     };
 
     const navItems = [
-        { to: "/home", label: "Menu Inicial", icon: <LayoutDashboard size={20} /> },
-        { to: "/meus-dados", label: "Meu Perfil", icon: <User size={20} /> },
+        { to: "/home", label: "Menu Inicial", icon: <LayoutDashboard size={22} /> },
+        { to: "/marketplaces", label: "Marketplaces", icon: <Store size={22} /> },
+        { to: "/meus-dados", label: "Meu Perfil", icon: <User size={22} /> },
     ];
 
     return (
@@ -41,10 +42,15 @@ export function HeaderU() {
             {isMobileOpen && <div className={styles.overlay} onClick={() => setIsMobileOpen(false)} />}
 
             {/* Sidebar */}
-            <aside className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ''}`}>
+            <aside className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ''} ${isCollapsed ? styles.collapsed : ''}`}>
                 <div className={styles.sidebarBrand}>
                     <div className={styles.brandLogo}>CF</div>
-                    <span className={styles.brandName}>Controla Fácil</span>
+                    {!isCollapsed && <span className={styles.brandName}>Controla Fácil</span>}
+                    
+                    <button className={styles.collapseBtn} onClick={onToggle}>
+                        {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+                    </button>
+
                     <button className={styles.closeMenuMobile} onClick={() => setIsMobileOpen(false)}>
                         <X size={24} />
                     </button>
@@ -56,7 +62,7 @@ export function HeaderU() {
                             `${styles.navItem} ${isActive ? styles.navActive : ''}`
                         } onClick={() => setIsMobileOpen(false)}>
                             {item.icon}
-                            <span>{item.label}</span>
+                            {!isCollapsed && <span>{item.label}</span>}
                         </NavLink>
                     ))}
                 </nav>
@@ -64,10 +70,12 @@ export function HeaderU() {
                 <div className={styles.sidebarFooter}>
                     <div className={styles.footerUser}>
                         <div className={styles.avatarMini}>{userName[0]}</div>
-                        <div className={styles.userInfo}>
-                            <p>{userName}</p>
-                            <span onClick={handleLogout}><LogOut size={14} /> Sair</span>
-                        </div>
+                        {!isCollapsed && (
+                            <div className={styles.userInfo}>
+                                <p>{userName}</p>
+                                <span onClick={handleLogout}><LogOut size={14} /> Sair</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </aside>

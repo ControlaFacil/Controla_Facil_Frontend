@@ -1,11 +1,12 @@
 .pageContainer {
   min-height: 100vh;
-  /* Top 120px (80px header + 40px gap), Left 260px Sidebar */
-  padding: 120px 40px 60px 300px; 
+  /* Topo dinâmico e margem esquerda dinâmica */
+  padding: calc(var(--topbar-height) + 40px) 40px 60px;
+  margin-left: var(--sidebar-width);
   background: radial-gradient(circle at top left, #f8fafc, #f1f5f9);
   display: flex;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profileCard {
@@ -192,6 +193,7 @@
 @media (max-width: 1024px) {
   .pageContainer {
     padding: 110px 20px 40px;
+    margin-left: 0;
   }
   .cardHeader {
     flex-direction: column;

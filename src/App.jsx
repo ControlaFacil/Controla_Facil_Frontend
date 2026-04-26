@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { HeaderU } from "./components/HeaderU";
 import { HomeU } from "./components/HomeU";
 import { LoginU } from "./components/LoginU";
@@ -11,28 +12,47 @@ import { EmailConfirmation } from "./components/EmailConfirmation";
 import { EmailValidado } from "./components/EmailValidado"
 import { EmailValidationFailed } from "./components/EmailValidationFailed";
 import { DashboardEstoque } from "./components/DashBoardEstoque";
+import { MarketplaceIntegrations } from "./components/MarketplaceIntegrations";
 import './global.css';
 
 function LayoutWithHeader() {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const location = useLocation();
   const hideHeaderOnRoutes = ["/", "/cadastro", "/email-confirmacao", "/email-validado", "/email-falha-validacao"];
+
+  useEffect(() => {
+    if (isSidebarCollapsed) {
+      document.body.classList.add('sidebar-collapsed');
+    } else {
+      document.body.classList.remove('sidebar-collapsed');
+    }
+  }, [isSidebarCollapsed]);
+
   return (
-    <>
-      {!hideHeaderOnRoutes.includes(location.pathname) && <HeaderU />}
-      <Routes>
-        <Route path="/" element={<LoginU />} />
-        <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/dashboard" element={<DashboardEstoque />} />
-        <Route path="/home" element={<HomeU />} />
-        <Route path="/meus-dados" element={<MeusDados />} />
-        <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />
-        <Route path="/cadastro-produto" element={<CadastroProduto />} />
-        <Route path="/estoque" element={<Estoque />} />
-        <Route path="/email-confirmacao" element={<EmailConfirmation />} />
-        <Route path="/email-validado" element={<EmailValidado />} />
-        <Route path="/email-falha-validacao" element={<EmailValidationFailed />} />
-      </Routes>
-    </>
+    <div className="main-layout">
+      {!hideHeaderOnRoutes.includes(location.pathname) && (
+        <HeaderU 
+          isCollapsed={isSidebarCollapsed} 
+          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+        />
+      )}
+      <main className="content-wrapper">
+        <Routes>
+          <Route path="/" element={<LoginU />} />
+          <Route path="/cadastro" element={<Cadastro />} />
+          <Route path="/dashboard" element={<DashboardEstoque />} />
+          <Route path="/home" element={<HomeU />} />
+          <Route path="/meus-dados" element={<MeusDados />} />
+          <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />
+          <Route path="/cadastro-produto" element={<CadastroProduto />} />
+          <Route path="/estoque" element={<Estoque />} />
+          <Route path="/marketplaces" element={<MarketplaceIntegrations />} />
+          <Route path="/email-confirmacao" element={<EmailConfirmation />} />
+          <Route path="/email-validado" element={<EmailValidado />} />
+          <Route path="/email-falha-validacao" element={<EmailValidationFailed />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
 
