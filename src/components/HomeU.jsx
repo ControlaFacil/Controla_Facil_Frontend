@@ -1,10 +1,33 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Globe, BarChart3, ArrowUpRight, Database } from 'lucide-react';
+import { API_BASE_URL } from '../api';
 import styles from './style/HomeU.module.css';
 
 export function HomeU() {
     const navigate = useNavigate();
+    const [userName, setUserName] = useState('Usuário');
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.sucesso) {
+                    const firstName = data.usuario.nome.split(' ')[0];
+                    setUserName(firstName);
+                }
+            } catch (e) {
+                console.error("Erro ao buscar nome do usuário", e);
+            }
+        };
+        fetchUser();
+    }, []);
 
     const modules = [
         {
@@ -39,15 +62,16 @@ export function HomeU() {
             title: "Análise de Dados",
             desc: "Insights avançados processados para tomada de decisão estratégica.",
             icon: <Database size={32} />,
-            route: "/analise",
+            route: "/dashboard",
             color: "#06b6d4"
         }
     ];
 
+    
     return (
         <div className={styles.homeContainer}>
             <header className={styles.welcomeHeader}>
-                <h1>Bem-vindo, Usuário</h1>
+                <h1>Bem-vindo, {userName}</h1>
                 <p>O que você deseja gerenciar hoje no <strong>Controla Fácil</strong>?</p>
             </header>
 

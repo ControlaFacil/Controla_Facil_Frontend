@@ -10,6 +10,7 @@ import { Estoque } from "./components/Estoque";
 import { EmailConfirmation } from "./components/EmailConfirmation";
 import { EmailValidado } from "./components/EmailValidado"
 import { EmailValidationFailed } from "./components/EmailValidationFailed";
+import { DashboardEstoque } from "./components/DashBoardEstoque";
 import './global.css';
 
 function LayoutWithHeader() {
@@ -21,6 +22,7 @@ function LayoutWithHeader() {
       <Routes>
         <Route path="/" element={<LoginU />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/dashboard" element={<DashboardEstoque />} />
         <Route path="/home" element={<HomeU />} />
         <Route path="/meus-dados" element={<MeusDados />} />
         <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />

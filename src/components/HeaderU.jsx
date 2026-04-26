@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, User, Settings, LifeBuoy, Bell, LogOut, ChevronDown, Menu, X } from 'lucide-react';
+import { LayoutDashboard, User, LogOut, ChevronDown, Menu, X } from 'lucide-react';
 import { API_BASE_URL } from '../api';
 import styles from './style/HeaderU.module.css';
 
@@ -31,20 +31,23 @@ export function HeaderU() {
     };
 
     const navItems = [
-        { to: "/home", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-        { to: "/usuarios", label: "Usuários", icon: <Users size={20} /> },
+        { to: "/home", label: "Menu Inicial", icon: <LayoutDashboard size={20} /> },
         { to: "/meus-dados", label: "Meu Perfil", icon: <User size={20} /> },
-        { to: "/configuracoes", label: "Configurações", icon: <Settings size={20} /> },
-        { to: "/suporte", label: "Suporte", icon: <LifeBuoy size={20} /> },
     ];
 
     return (
         <>
-            {/* Sidebar Desktop */}
+            {/* Overlay para Mobile */}
+            {isMobileOpen && <div className={styles.overlay} onClick={() => setIsMobileOpen(false)} />}
+
+            {/* Sidebar */}
             <aside className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ''}`}>
                 <div className={styles.sidebarBrand}>
                     <div className={styles.brandLogo}>CF</div>
                     <span className={styles.brandName}>Controla Fácil</span>
+                    <button className={styles.closeMenuMobile} onClick={() => setIsMobileOpen(false)}>
+                        <X size={24} />
+                    </button>
                 </div>
 
                 <nav className={styles.sidebarNav}>
@@ -78,11 +81,6 @@ export function HeaderU() {
                 <h2 className={styles.pageTitle}>Painel Principal</h2>
 
                 <div className={styles.topbarActions}>
-                    <div className={styles.notifBtn}>
-                        <Bell size={20} />
-                        <span className={styles.notifBadge}>3</span>
-                    </div>
-
                     <div className={styles.userDropdownWrapper}>
                         <div className={styles.userTrigger} onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
                             <div className={styles.avatar}>{userName[0]}</div>
