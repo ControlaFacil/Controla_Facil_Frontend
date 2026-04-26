@@ -11,7 +11,21 @@ const MOCK_INTEGRATIONS = [
 ];
 
 export function MarketplaceIntegrations() {
-    const [integrations] = useState(MOCK_INTEGRATIONS); // Troque para [] para testar Empty State
+    const [integrations] = useState([]); // Troque para MOCK_INTEGRATIONS para ver a lista
+
+    const handleAuthML = () => {
+        const url = import.meta.env.VITE_ML_URL_AUTH;
+        const width = 600;
+        const height = 750;
+        const left = (window.screen.width / 2) - (width / 2);
+        const top = (window.screen.height / 2) - (height / 2);
+
+        window.open(
+            url, 
+            'MLAuth', 
+            `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
+        );
+    };
 
     const getStatusClass = (status) => {
         switch (status) {
@@ -29,7 +43,7 @@ export function MarketplaceIntegrations() {
                     <h1 className={styles.mainTitle}>Integração com Marketplaces</h1>
                     <p className={styles.subtitle}>Conecte e gerencie suas vendas em múltiplos canais de forma centralizada.</p>
                 </div>
-                <button className={styles.btnAdd}>
+                <button className={styles.btnAdd} onClick={handleAuthML}>
                     <Plus size={20} />
                     <span>Adicionar Nova Integração</span>
                 </button>
@@ -76,7 +90,7 @@ export function MarketplaceIntegrations() {
                     </div>
                     <h2>Nenhuma integração cadastrada</h2>
                     <p>Conecte seu primeiro marketplace para começar a sincronizar seu estoque e pedidos automaticamente.</p>
-                    <button className={styles.btnAdd}>
+                    <button className={styles.btnAdd} onClick={handleAuthML}>
                         <Plus size={20} /> Adicionar Integração
                     </button>
                 </div>
