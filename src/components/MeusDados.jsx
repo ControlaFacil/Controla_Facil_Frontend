@@ -1,352 +1,195 @@
-import { useEffect, useState } from "react";
-import styles from "./style/MeusDados.module.css";
+import { useEffect, useState, useCallback } from "react";
 import { ToastContainer, toast } from 'react-toastify';
+import { Edit, Save, XCircle, User, Briefcase, Mail, Phone, CreditCard, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../api';
+import styles from "./style/MeusDados.module.css";
 import 'react-toastify/dist/ReactToastify.css';
-import { Edit, Save, XCircle } from 'lucide-react';
 
-const maskCpfCnpj = (value) => {
-    const cleanValue = String(value).replace(/\D/g, "");
-    const length = cleanValue.length;
-
-    if (length <= 11) {
-        return cleanValue.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
-    } else if (length === 14) {
-        return cleanValue.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
-    }
-    return cleanValue; 
+const maskCpfCnpj = (v) => {
+    const c = String(v).replace(/\D/g, "");
+    if (c.length <= 11) return c.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    if (c.length === 14) return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+    return c;
 };
 
-const maskcelular = (value) => {
-    const cleanValue = String(value).replace(/\D/g, "");
-    if (cleanValue.length <= 10) {
-        return cleanValue.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
-    } else if (cleanValue.length === 11) {
-        return cleanValue.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-    }
-    return cleanValue; 
+const maskCelular = (v) => {
+    const c = String(v).replace(/\D/g, "");
+    return c.length <= 10 
+        ? c.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3")
+        : c.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
 };
 
 export function MeusDados() {
     const [usuario, setUsuario] = useState({
-        nome: "", 
-        cpf: "", 
-        celular: "", 
-        email: "",
-        senha: "",
-        confirmarSenha: "",
-        id: null, 
+        id: null, nome: "", cpf: "", celular: "", email: "", cargo: "", senha: "", confirmarSenha: ""
     });
+    const [originalUsuario, setOriginalUsuario] = useState({});
+    const [isEditing, setIsEditing] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const [originalUsuario, setOriginalUsuario] = useState({}); 
-    const [isEditing, setIsEditing] = useState(false); 
-    const [isLoading, setIsLoading] = useState(true); 
-    const [isSaving, setIsSaving] = useState(false); 
+    const fetchDados = useCallback(async () => {
+        const token = localStorage.getItem("authToken");
+        if (!token) return toast.error("Sessão expirada. Faça login novamente.");
 
-    useEffect(() => {
-        const fetchDadosUsuario = async () => {
-            const authToken = localStorage.getItem("authToken");
-            setIsLoading(true);
-
-            console.log("-----------------------------------------");
-            console.log("🚀 INÍCIO: Busca de Dados do Usuário Logado (/me)");
-
-            if (!authToken) {
-                console.error("⚠️ Token de autenticação não encontrado. Redirecionar para login.");
-                toast.error("Sessão expirada ou não autenticada. Faça login novamente.");
-                setIsLoading(false);
-                return;
-            }
-            
-            try {
-                const response = await fetch("/api/usuarios/me", {
-                    method: "GET",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${authToken}`
-                    },
-                });
-                
-                console.log(`📡 Resposta /me recebida. Status: ${response.status}`);
-
-                if (response.status === 401) {
-                    console.error("❌ ERRO 401: Não Autorizado. Token inválido.");
-                    toast.error("Token inválido. Redirecionando para login.");
-                    setIsLoading(false);
-                    return;
-                }
-                
-                const data = await response.json();
-                const userDataFromApi = data.usuario;
-
-                if (!response.ok || !userDataFromApi) {
-                    const errorText = data.message || "Erro ao carregar dados do usuário.";
-                    console.error("❌ Erro ao buscar dados:", errorText);
-                    toast.error(errorText);
-                    setIsLoading(false);
-                    return;
-                }
-                
-                const userData = {
-                    id: userDataFromApi.id, 
-                    nome: userDataFromApi.nome || "", 
-                    cpf: userDataFromApi.cpf || "", 
-                    celular: userDataFromApi.celular || "", 
-                    email: userDataFromApi.email || "",
-                    senha: "", 
-                    confirmarSenha: "",
-                };
-                
-                setUsuario(userData);
-                setOriginalUsuario(userData); 
-                
-                toast.success("Dados do usuário carregados com sucesso!");
-
-            } catch (error) {
-                console.error("🔥 ERRO FATAL (Rede/Inesperado):", error);
-                toast.error("Erro de conexão ao carregar seus dados.");
-            } finally {
-                setIsLoading(false);
-                console.log("-----------------------------------------");
-            }
-        };
-        fetchDadosUsuario();
-    }, []); 
-
-    const handleUpdate = async () => {
-        setIsSaving(true);
-        const authToken = localStorage.getItem("authToken");
-
-        const payload = {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            cpf: usuario.cpf, 
-            celular: usuario.celular, 
-        };
-
-        if (usuario.senha) {
-            payload.senha = usuario.senha;
-        }
-
-        console.log("-----------------------------------------");
-        console.log("🔄 INÍCIO: Tentativa de Atualização (PUT)");
-        console.log("➡️ Enviando para:", `/api/usuarios/${usuario.id}`);
-        console.log("📦 Payload:", payload);
-        
         try {
-            const response = await fetch(`/api/usuarios/${usuario.id}`, {
+            const res = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (res.ok && data.usuario) {
+                const mapped = {
+                    id: data.usuario.id,
+                    nome: data.usuario.nome || "",
+                    cpf: data.usuario.cpf_cnpj || "",
+                    celular: data.usuario.celular || "",
+                    email: data.usuario.email || "",
+                    cargo: data.usuario.cargo || "",
+                    senha: "", confirmarSenha: ""
+                };
+                setUsuario(mapped);
+                setOriginalUsuario(mapped);
+            }
+        } catch (err) {
+            toast.error("Erro ao carregar dados.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchDados(); }, [fetchDados]);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        const val = (name === "cpf" || name === "celular") ? value.replace(/\D/g, "") : value;
+        setUsuario(prev => ({ ...prev, [name]: val }));
+    };
+
+    const toggleEdit = (cancel = false) => {
+        if (cancel) setUsuario({ ...originalUsuario, senha: "", confirmarSenha: "" });
+        setIsEditing(!isEditing);
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        if (usuario.senha && usuario.senha !== usuario.confirmarSenha) return toast.error("As senhas não coincidem.");
+        
+        setIsSaving(true);
+        try {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch(`${API_BASE_URL}/usuarios/${usuario.id}`, {
                 method: "PUT",
-                headers: {
+                headers: { 
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${authToken}`
+                    "Authorization": `Bearer ${token}` 
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    id: usuario.id,
+                    nome: usuario.nome,
+                    email: usuario.email,
+                    cpf_cnpj: usuario.cpf,
+                    celular: usuario.celular,
+                    cargo: usuario.cargo,
+                    ...(usuario.senha && { senha: usuario.senha })
+                })
             });
 
-            console.log(`📡 Resposta PUT recebida. Status: ${response.status}`);
-            
-            const text = await response.text();
-            const data = text ? JSON.parse(text) : {};
-            console.log("📦 Dados da Resposta:", data);
-
-            if (!response.ok) {
-                const errorText = data.message || "Erro ao salvar dados. Verifique o formulário.";
-                console.error("❌ ERRO NO PUT:", errorText);
-                toast.error(errorText);
-                setIsSaving(false);
-                return;
+            if (res.ok) {
+                toast.success("Dados atualizados!");
+                setOriginalUsuario(usuario);
+                setIsEditing(false);
+            } else {
+                const data = await res.json();
+                toast.error(data.message || "Erro ao salvar.");
             }
-
-            toast.success("Dados atualizados com sucesso!");
-
-            setOriginalUsuario(usuario);
-            setIsEditing(false);
-
-        } catch (error) {
-            console.error("🔥 ERRO FATAL (Rede/Inesperado):", error);
-            toast.error("Erro de conexão. Não foi possível salvar.");
+        } catch (err) {
+            toast.error("Erro de conexão.");
         } finally {
             setIsSaving(false);
-            console.log("-----------------------------------------");
-        }
-    }
-
-    const handleChange = (e, stateSetter) => {
-        const { name, value } = e.target;
-        
-        if (name === "cpf" || name === "celular") {
-             const cleanValue = value.replace(/\D/g, "");
-             stateSetter(prev => ({ ...prev, [name]: cleanValue }));
-        } else {
-             stateSetter(prev => ({ ...prev, [name]: value }));
         }
     };
 
-    const handleEditToggle = (cancel = false) => {
-        if (cancel) {
-            setUsuario(originalUsuario);
-            setUsuario(prev => ({ ...originalUsuario, senha: "", confirmarSenha: "" }));
-            toast.info("Edição cancelada. Dados revertidos.");
-        }
-        setIsEditing(prev => !prev);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-        if (usuario.senha && usuario.senha !== usuario.confirmarSenha) {
-            toast.error("As novas senhas não coincidem.");
-            return;
-        }
-        const cleanCpf = usuario.cpf;
-        const cleancelular = usuario.celular;
-
-        if (cleanCpf.length !== 11 && cleanCpf.length !== 14) {
-            toast.error("CNPJ/CPF inválido. Deve ter 11 ou 14 dígitos.");
-            return;
-        }
-        if (cleancelular.length < 10 || cleancelular.length > 11) {
-            toast.error("Celular inválido. Deve ter 10 ou 11 dígitos (DDD + número).");
-            return;
-        }
-        
-        handleUpdate();
-    };
-
+    if (isLoading) return (
+        <div className={styles.loadingState}>
+            <Loader2 className={styles.spinner} />
+            <p>Carregando perfil...</p>
+        </div>
+    );
 
     return (
-        <div className={styles.container}>
-            <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnHover />
+        <div className={styles.pageContainer}>
+            <ToastContainer autoClose={3000} theme="colored" />
             
-            <form className={styles.formWrapper} onSubmit={handleSubmit}>
-                <div className={styles.header}>
-                    <h2 className={styles.title}>Meus Dados</h2>
+            <form className={styles.profileCard} onSubmit={handleSave}>
+                <header className={styles.cardHeader}>
+                    <div className={styles.titleWrapper}>
+                        <h2 className={styles.mainTitle}>Meu Perfil</h2>
+                        <p className={styles.infoText}>Gerencie suas informações pessoais e de acesso</p>
+                    </div>
                     
-                    <div className={styles.buttonContainer}>
+                    <div className={styles.actions}>
                         {!isEditing ? (
-                            <button 
-                                type="button" 
-                                className={styles.editBtn} 
-                                onClick={() => handleEditToggle(false)} 
-                                disabled={isLoading || isSaving}
-                            >
-                                <Edit size={18} /> Editar Dados
+                            <button type="button" className={styles.btnEdit} onClick={() => toggleEdit()}>
+                                <Edit size={18} /> Editar Perfil
                             </button>
                         ) : (
-                            <>
-                                <button type="button" className={`${styles.editBtn} ${styles.cancelBtn}`} onClick={() => handleEditToggle(true)} disabled={isSaving}>
+                            <div className={styles.editActions}>
+                                <button type="button" className={styles.btnCancel} onClick={() => toggleEdit(true)}>
                                     <XCircle size={18} /> Cancelar
                                 </button>
-                                <button type="submit" className={`${styles.editBtn} ${styles.saveBtn}`} disabled={isSaving}>
-                                    {isSaving ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin" aria-hidden="true"></i> Salvando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save size={18} /> Salvar
-                                        </>
-                                    )}
+                                <button type="submit" className={styles.btnSave} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className={styles.spinnerSmall} /> : <Save size={18} />}
+                                    {isSaving ? "Salvando..." : "Salvar Alterações"}
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
-                </div>
-                
-                {isLoading ? (
-                    <div className={styles.loading}>
-                        <i className="fas fa-spinner fa-spin" aria-hidden="true"></i> 
-                        <p>Carregando dados...</p>
-                    </div>
-                ) : (
-                    <>
-                        <h3 className={styles.subtitle}>Dados do Usuário/Empresa</h3> 
+                </header>
 
-                        <div className={styles.dataGrid}>
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>Nome:</label>
-                                <input 
-                                    className={styles.input} 
-                                    type="text" 
-                                    name="nome"
-                                    value={usuario.nome} 
-                                    onChange={(e) => handleChange(e, setUsuario)}
-                                    disabled={!isEditing} 
-                                    required 
-                                />
+                <div className={styles.contentGrid}>
+                    <section className={styles.formSection}>
+                        <h3 className={styles.sectionTitle}>Dados Pessoais</h3>
+                        <div className={styles.inputsGrid}>
+                            <div className={styles.field}>
+                                <label><User size={14} /> Nome Completo</label>
+                                <input name="nome" value={usuario.nome} onChange={handleChange} disabled={!isEditing} required />
                             </div>
-                            
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>CPF:</label>
-                                <input 
-                                    className={styles.input} 
-                                    type="text" 
-                                    name="cpf"
-                                    value={maskCpfCnpj(usuario.cpf)} 
-                                    onChange={(e) => handleChange(e, setUsuario)}
-                                    disabled={!isEditing} 
-                                    maxLength={18} 
-                                    required
-                                />
+                            <div className={styles.field}>
+                                <label><CreditCard size={14} /> CPF/CNPJ</label>
+                                <input name="cpf" value={maskCpfCnpj(usuario.cpf)} onChange={handleChange} disabled={!isEditing} maxLength={18} required />
                             </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>E-mail:</label>
-                                <input 
-                                    className={styles.input} 
-                                    type="email" 
-                                    name="email"
-                                    value={usuario.email} 
-                                    onChange={(e) => handleChange(e, setUsuario)}
-                                    disabled={!isEditing} 
-                                    required
-                                />
+                            <div className={styles.field}>
+                                <label><Mail size={14} /> E-mail</label>
+                                <input name="email" type="email" value={usuario.email} onChange={handleChange} disabled={!isEditing} required />
                             </div>
-                            
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>Celular:</label>
-                                <input 
-                                    className={styles.input} 
-                                    type="tel" 
-                                    name="celular"
-                                    value={maskcelular(usuario.celular)} 
-                                    onChange={(e) => handleChange(e, setUsuario)}
-                                    disabled={!isEditing} 
-                                    maxLength={15} 
-                                    required
-                                />
+                            <div className={styles.field}>
+                                <label><Phone size={14} /> Celular</label>
+                                <input name="celular" value={maskCelular(usuario.celular)} onChange={handleChange} disabled={!isEditing} maxLength={15} required />
+                            </div>
+                            <div className={styles.field}>
+                                <label><Briefcase size={14} /> Cargo / Função</label>
+                                <input name="cargo" placeholder="Ex: Gerente de Logística" value={usuario.cargo} onChange={handleChange} disabled={!isEditing} />
                             </div>
                         </div>
+                    </section>
 
-                        {isEditing && (
-                            <>
-                                <h3 className={styles.subtitle}>Alterar Senha (Opcional)</h3>
-                                <div className={styles.dataGrid}>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Nova Senha:</label>
-                                        <input 
-                                            className={styles.input} 
-                                            type="password" 
-                                            name="senha"
-                                            value={usuario.senha} 
-                                            onChange={(e) => handleChange(e, setUsuario)}
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.label}>Confirmar Nova Senha:</label>
-                                        <input 
-                                            className={styles.input} 
-                                            type="password" 
-                                            name="confirmarSenha"
-                                            value={usuario.confirmarSenha} 
-                                            onChange={(e) => handleChange(e, setUsuario)}
-                                        />
-                                    </div>
+                    {isEditing && (
+                        <section className={styles.formSection}>
+                            <h3 className={styles.sectionTitle}>Segurança</h3>
+                            <div className={styles.inputsGrid}>
+                                <div className={styles.field}>
+                                    <label>Nova Senha</label>
+                                    <input name="senha" type="password" value={usuario.senha} onChange={handleChange} placeholder="Deixe em branco para manter" />
                                 </div>
-                            </>
-                        )}
-                    </>
-                )}
+                                <div className={styles.field}>
+                                    <label>Confirmar Senha</label>
+                                    <input name="confirmarSenha" type="password" value={usuario.confirmarSenha} onChange={handleChange} />
+                                </div>
+                            </div>
+                        </section>
+                    )}
+                </div>
             </form>
         </div>
     );

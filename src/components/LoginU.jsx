@@ -19,7 +19,6 @@ export function LoginU() {
     setMessage(null);
 
     try {
-
       const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -46,7 +45,6 @@ export function LoginU() {
       }
 
       localStorage.setItem("authToken", data.token || "DEBUG_TOKEN_PLACEHOLDER");
-      localStorage.setItem("usuarioId", (data.usuario && data.usuario.id) || "DEBUG_ID_PLACEHOLDER");
       
       setMessage({ type: 'success', text: "Login realizado com sucesso! Redirecionando..." });
       setTimeout(() => {

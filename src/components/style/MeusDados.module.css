@@ -1,202 +1,179 @@
-/* --- Variáveis CSS (Padrão Unificado) --- */
-:root {
-    --primary-color: #5FC16C; /* greenControlafacil */
-    --primary-hover-color: #4CAF5A; 
-    --dark-blue-grey: #0C3447; /* blueControlafacil */
-    --light-grey-bg: #f8f9fb; /* gelo */
-    --text-color-dark: #333;
-    --text-color-light: #f8f9fa;
-    --border-color: #e0e0e0;
-    --input-disabled-bg: #f3f4f6; /* Cor mais clara para indicar desabilitado */
-    --input-active-bg: #fff; /* Fundo branco para edição */
-    --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    --border-radius: 8px;
-    --error-color: #e74c3c; /* Vermelho para cancelar/erro */
+.pageContainer {
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: radial-gradient(circle at top left, #f8fafc, #f1f5f9);
+  display: flex;
+  justify-content: center;
 }
 
-/* --- Layout Principal --- */
-.container {
-    display: flex;
-    justify-content: center;
-    padding: 30px;
-    background-color: var(--light-grey-bg);
-    min-height: calc(100vh - 65px);
+.profileCard {
+  width: 100%;
+  max-width: 960px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  animation: fadeIn 0.6s ease-out;
 }
 
-.formWrapper {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
-    width: 100%;
-    max-width: 900px;
-    margin: 20px 0;
+.cardHeader {
+  padding: 40px;
+  background: linear-gradient(135deg, #0C3447 0%, #1a4a61 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* --- Cabeçalho do Formulário (Título e Botões) --- */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
+.mainTitle {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
 }
 
-.title {
-    font-size: 2em;
-    font-weight: 700;
-    color: var(--dark-blue-grey);
-    margin: 0;
+.infoText {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 5px 0 0;
+  font-size: 0.95rem;
 }
 
-.subtitle {
-    font-size: 1.2em;
-    font-weight: 600;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    color: var(--dark-blue-grey);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 5px;
+.contentGrid {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
 }
 
-/* --- Estrutura de Grid para Inputs --- */
-.dataGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Divide em 2 colunas iguais */
-    gap: 20px 30px; /* Espaçamento entre linhas e colunas */
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0C3447;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.formGroup {
-    display: flex;
-    flex-direction: column;
+.inputsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
 
-/* Faz com que o campo ocupe as duas colunas */
-.formGroupFull {
-    grid-column: span 2;
-    display: flex;
-    flex-direction: column;
+.field, .fieldFull {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.label {
-    font-size: 0.9em;
-    font-weight: 500;
-    margin-bottom: 6px;
-    color: #555;
+.fieldFull { grid-column: span 2; }
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* --- Estilo de Input --- */
-.input {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
-    color: var(--text-color-dark);
-    font-size: 1em;
-    font-weight: 500;
-    transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+.field input {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 1rem;
+  color: #1e293b;
+  transition: all 0.2s ease;
 }
 
-/* Estilo para inputs DESABILITADOS (Visualização) */
-.input:disabled {
-    background-color: var(--input-disabled-bg); /* Cor clara de desabilitado */
-    cursor: default; /* Indica que não é clicável/editável */
-    border-color: var(--border-color);
+.field input:focus:not(:disabled) {
+  outline: none;
+  background: #fff;
+  border-color: #5FC16C;
+  box-shadow: 0 0 0 4px rgba(95, 193, 108, 0.1);
 }
 
-/* Estilo para inputs HABILITADOS (Edição) */
-.input:not(:disabled) {
-    background-color: var(--input-active-bg);
-    border-color: #a0a0a0;
-}
-.input:not(:disabled):focus,
-.input:not(:disabled) select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(95, 193, 108, 0.3);
+.field input:disabled {
+  color: #94a3b8;
+  border-color: transparent;
+  background: #f1f5f9;
 }
 
-/* --- Botões de Ação --- */
-.buttonContainer {
-    display: flex;
-    gap: 10px;
+/* Buttons */
+.actions {
+  display: flex;
+  gap: 12px;
 }
 
-.editBtn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: var(--border-radius);
-    font-size: 0.9em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    text-transform: uppercase;
+.editActions {
+  display: flex;
+  gap: 12px;
 }
 
-.editBtn svg {
-    margin-right: 0;
+.btnEdit, .btnSave, .btnCancel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
 }
 
-.editBtn:hover {
-    background-color: var(--primary-hover-color);
-}
-.editBtn:active {
-    transform: scale(0.98);
+.btnEdit {
+  background: #5FC16C;
+  color: white;
 }
 
-.cancelBtn {
-    background-color: #95a5a6; /* Cinza suave para cancelar */
-}
-.cancelBtn:hover {
-    background-color: #7f8c8d;
-}
-.cancelBtn svg {
-    color: var(--error-color); /* Ícone vermelho no botão de cancelamento */
+.btnEdit:hover {
+  background: #4CAF5A;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(95, 193, 108, 0.3);
 }
 
-.saveBtn {
-    background-color: var(--primary-color);
+.btnSave {
+  background: #fff;
+  color: #0C3447;
 }
 
+.btnSave:hover {
+  background: #f8fafc;
+  transform: translateY(-2px);
+}
 
-/* --- Responsividade --- */
+.btnCancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.btnCancel:hover { background: rgba(255, 255, 255, 0.2); }
+
+.loadingState {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: #64748b;
+}
+
+.spinner { animation: spin 1s linear infinite; color: #5FC16C; width: 40px; height: 40px; }
+.spinnerSmall { animation: spin 1s linear infinite; width: 18px; height: 18px; }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
 @media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-    .formWrapper {
-        padding: 20px;
-    }
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .title {
-        font-size: 1.5em;
-        margin-bottom: 10px;
-    }
-    .buttonContainer {
-        width: 100%;
-        justify-content: flex-end;
-    }
-    .dataGrid {
-        grid-template-columns: 1fr; /* Stack em telas pequenas */
-        gap: 15px;
-    }
-    .formGroupFull {
-        grid-column: span 1; /* Ocupa apenas 1 coluna */
-    }
-    .subtitle {
-        font-size: 1.1em;
-    }
-    .editBtn {
-        padding: 10px 15px;
-        font-size: 0.8em;
-    }
+  .cardHeader { flex-direction: column; text-align: center; gap: 20px; }
+  .inputsGrid { grid-template-columns: 1fr; }
+  .fieldFull { grid-column: span 1; }
+  .contentGrid { padding: 25px; }
+  .actions, .editActions { width: 100%; flex-direction: column; }
+  .btnEdit, .btnSave, .btnCancel { width: 100%; justify-content: center; }
 }

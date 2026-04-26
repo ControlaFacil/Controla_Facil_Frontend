@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import styles from './style/HeaderU.module.css';
 import controlafacilIcone from '../assets/icone.controlafacil.png';
 import { User, Bell, Menu, X } from 'lucide-react'; 
 import { UserMenu } from './UserMenu';
+import { API_BASE_URL } from '../api';
 
 // LINKS DE NAVEGAÇÃO REVISADOS (Todos os links agora na navegação principal)
 const PRIMARY_NAV_LINKS = [
@@ -19,7 +20,36 @@ const PRIMARY_NAV_LINKS = [
 export function HeaderU() {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [userName, setUserName] = useState('Usuário');
     const [hasNewNotifications] = useState(true); // Simulação de notificações
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/usuarios/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.sucesso && data.usuario) {
+                        // Exibe apenas o primeiro nome no Header
+                        const firstName = data.usuario.nome.split(' ')[0];
+                        setUserName(firstName);
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao buscar dados do usuário:", error);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     function toggleUserMenu() {
         // UX: Fecha o menu móvel se o menu do usuário for aberto/fechado
@@ -71,13 +101,8 @@ export function HeaderU() {
             
             {/* ÍCONES E PERFIL */}
             <div className={styles.userProfile}>
-                {/* Ícone de Notificação com ponto vermelho */}
-                <div className={styles.notificationWrapper}>
-                    <Bell size={20} className={styles.notificationIcon} />
-                    {hasNewNotifications && <span className={styles.notificationDot}></span>}
-                </div>
 
-                <span className={styles.userName}>Olá, Admin!</span>
+                <span className={styles.userName}>Olá, {userName}!</span>
                 
                 {/* User Menu Dropdown */}
                 <div className={styles.userWrapper}>
