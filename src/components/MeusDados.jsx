@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { ToastContainer, toast } from 'react-toastify';
-import { Edit, Save, XCircle, User, Briefcase, Mail, Phone, CreditCard, Loader2 } from 'lucide-react';
+import { Edit, Save, XCircle, User, Briefcase, Mail, Phone, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
 import { API_BASE_URL } from '../api';
 import styles from "./style/MeusDados.module.css";
 import 'react-toastify/dist/ReactToastify.css';
@@ -125,7 +125,7 @@ export function MeusDados() {
                 <header className={styles.cardHeader}>
                     <div className={styles.titleWrapper}>
                         <h2 className={styles.mainTitle}>Meu Perfil</h2>
-                        <p className={styles.infoText}>Gerencie suas informações pessoais e de acesso</p>
+                        <p className={styles.infoText}>Gerencie suas informações pessoais e funcionais</p>
                     </div>
                     
                     <div className={styles.actions}>
@@ -149,38 +149,44 @@ export function MeusDados() {
 
                 <div className={styles.contentGrid}>
                     <section className={styles.formSection}>
-                        <h3 className={styles.sectionTitle}>Dados Pessoais</h3>
+                        <div className={styles.sectionHeader}>
+                            <User size={20} className={styles.sectionIcon} />
+                            <h3 className={styles.sectionTitle}>Dados Gerais</h3>
+                        </div>
                         <div className={styles.inputsGrid}>
                             <div className={styles.field}>
-                                <label><User size={14} /> Nome Completo</label>
+                                <label>Nome Completo</label>
                                 <input name="nome" value={usuario.nome} onChange={handleChange} disabled={!isEditing} required />
                             </div>
                             <div className={styles.field}>
-                                <label><CreditCard size={14} /> CPF/CNPJ</label>
+                                <label>CPF/CNPJ</label>
                                 <input name="cpf" value={maskCpfCnpj(usuario.cpf)} onChange={handleChange} disabled={!isEditing} maxLength={18} required />
                             </div>
                             <div className={styles.field}>
-                                <label><Mail size={14} /> E-mail</label>
+                                <label>E-mail</label>
                                 <input name="email" type="email" value={usuario.email} onChange={handleChange} disabled={!isEditing} required />
                             </div>
                             <div className={styles.field}>
-                                <label><Phone size={14} /> Celular</label>
+                                <label>Celular</label>
                                 <input name="celular" value={maskCelular(usuario.celular)} onChange={handleChange} disabled={!isEditing} maxLength={15} required />
                             </div>
                             <div className={styles.field}>
-                                <label><Briefcase size={14} /> Cargo / Função</label>
-                                <input name="cargo" placeholder="Ex: Gerente de Logística" value={usuario.cargo} onChange={handleChange} disabled={!isEditing} />
+                                <label>Cargo / Função</label>
+                                <input name="cargo" placeholder="Não definido" value={usuario.cargo} onChange={handleChange} disabled={!isEditing} />
                             </div>
                         </div>
                     </section>
 
                     {isEditing && (
                         <section className={styles.formSection}>
-                            <h3 className={styles.sectionTitle}>Segurança</h3>
+                            <div className={styles.sectionHeader}>
+                                <ShieldCheck size={20} className={styles.sectionIcon} />
+                                <h3 className={styles.sectionTitle}>Segurança</h3>
+                            </div>
                             <div className={styles.inputsGrid}>
                                 <div className={styles.field}>
                                     <label>Nova Senha</label>
-                                    <input name="senha" type="password" value={usuario.senha} onChange={handleChange} placeholder="Deixe em branco para manter" />
+                                    <input name="senha" type="password" value={usuario.senha} onChange={handleChange} placeholder="Deixar em branco para manter" />
                                 </div>
                                 <div className={styles.field}>
                                     <label>Confirmar Senha</label>

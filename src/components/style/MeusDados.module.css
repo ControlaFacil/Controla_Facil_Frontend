@@ -1,17 +1,19 @@
 .pageContainer {
   min-height: 100vh;
-  padding: 40px 20px;
+  /* Top 120px (80px header + 40px gap), Left 260px Sidebar */
+  padding: 120px 40px 60px 300px; 
   background: radial-gradient(circle at top left, #f8fafc, #f1f5f9);
   display: flex;
   justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .profileCard {
   width: 100%;
-  max-width: 960px;
+  max-width: 900px;
   background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
+  border-radius: 28px;
+  box-shadow: 0 10px 40px rgba(12, 52, 71, 0.05);
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.8);
   animation: fadeIn 0.6s ease-out;
@@ -23,20 +25,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 4px solid #5FC16C;
 }
 
 .mainTitle {
   color: #fff;
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .infoText {
   color: rgba(255, 255, 255, 0.7);
   margin: 5px 0 0;
   font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .contentGrid {
@@ -46,14 +50,29 @@
   gap: 40px;
 }
 
-.sectionTitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #0C3447;
-  margin-bottom: 20px;
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sectionIcon {
+  color: #5FC16C;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0C3447;
+  margin: 0;
 }
 
 .inputsGrid {
@@ -62,31 +81,28 @@
   gap: 24px;
 }
 
-.field, .fieldFull {
+.field {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.fieldFull { grid-column: span 2; }
-
 .field label {
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #64748b;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  margin-left: 4px;
 }
 
 .field input {
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   font-size: 1rem;
   color: #1e293b;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .field input:focus:not(:disabled) {
@@ -100,9 +116,9 @@
   color: #94a3b8;
   border-color: transparent;
   background: #f1f5f9;
+  cursor: not-allowed;
 }
 
-/* Buttons */
 .actions {
   display: flex;
   gap: 12px;
@@ -119,25 +135,27 @@
   gap: 10px;
   padding: 12px 24px;
   border-radius: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
   border: none;
+  font-size: 0.9rem;
 }
 
 .btnEdit {
   background: #5FC16C;
   color: white;
+  box-shadow: 0 4px 12px rgba(95, 193, 108, 0.3);
 }
 
 .btnEdit:hover {
   background: #4CAF5A;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(95, 193, 108, 0.3);
+  box-shadow: 0 8px 20px rgba(95, 193, 108, 0.4);
 }
 
 .btnSave {
-  background: #fff;
+  background: white;
   color: #0C3447;
 }
 
@@ -151,7 +169,9 @@
   color: #fff;
 }
 
-.btnCancel:hover { background: rgba(255, 255, 255, 0.2); }
+.btnCancel:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
 
 .loadingState {
   height: 100vh;
@@ -167,13 +187,27 @@
 .spinnerSmall { animation: spin 1s linear infinite; width: 18px; height: 18px; }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-@media (max-width: 768px) {
-  .cardHeader { flex-direction: column; text-align: center; gap: 20px; }
-  .inputsGrid { grid-template-columns: 1fr; }
-  .fieldFull { grid-column: span 1; }
-  .contentGrid { padding: 25px; }
-  .actions, .editActions { width: 100%; flex-direction: column; }
-  .btnEdit, .btnSave, .btnCancel { width: 100%; justify-content: center; }
+@media (max-width: 1024px) {
+  .pageContainer {
+    padding: 110px 20px 40px;
+  }
+  .cardHeader {
+    flex-direction: column;
+    text-align: center;
+    gap: 24px;
+    padding: 30px;
+  }
+  .inputsGrid {
+    grid-template-columns: 1fr;
+  }
+  .actions, .editActions {
+    width: 100%;
+    flex-direction: column;
+  }
+  .btnEdit, .btnSave, .btnCancel {
+    width: 100%;
+    justify-content: center;
+  }
 }
