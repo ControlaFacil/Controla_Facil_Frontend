@@ -13,12 +13,14 @@ import { EmailValidado } from "./components/EmailValidado"
 import { EmailValidationFailed } from "./components/EmailValidationFailed";
 import { DashboardEstoque } from "./components/DashBoardEstoque";
 import { MarketplaceIntegrations } from "./components/MarketplaceIntegrations";
+import { MarketplaceAuthSuccess } from "./components/MarketplaceAuthSuccess";
+import { MarketplaceAuthError } from "./components/MarketplaceAuthError";
 import './global.css';
 
 function LayoutWithHeader() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const location = useLocation();
-  const hideHeaderOnRoutes = ["/", "/cadastro", "/email-confirmacao", "/email-validado", "/email-falha-validacao"];
+  const hideHeaderOnRoutes = ["/", "/cadastro", "/email-confirmacao", "/email-validado", "/email-falha-validacao", "/ml-auth-success", "/ml-auth-error"];
 
   useEffect(() => {
     if (isSidebarCollapsed) {
@@ -47,6 +49,8 @@ function LayoutWithHeader() {
           <Route path="/cadastro-produto" element={<CadastroProduto />} />
           <Route path="/estoque" element={<Estoque />} />
           <Route path="/marketplaces" element={<MarketplaceIntegrations />} />
+          <Route path="/ml-auth-success" element={<MarketplaceAuthSuccess />} />
+          <Route path="/ml-auth-error" element={<MarketplaceAuthError />} />
           <Route path="/email-confirmacao" element={<EmailConfirmation />} />
           <Route path="/email-validado" element={<EmailValidado />} />
           <Route path="/email-falha-validacao" element={<EmailValidationFailed />} />
