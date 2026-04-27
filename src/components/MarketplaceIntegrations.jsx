@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Trash2, RefreshCw, Loader2 } from 'lucide-react';
+import { Plus, Edit3, Trash2, RefreshCw, X, Store, Tag } from 'lucide-react';
 import styles from './style/MarketplaceIntegrations.module.css';
 
 const MOCK_INTEGRATIONS = [
@@ -12,19 +12,27 @@ const MOCK_INTEGRATIONS = [
 
 export function MarketplaceIntegrations() {
     const [integrations] = useState([]); // Troque para MOCK_INTEGRATIONS para ver a lista
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({ marketplace: 'mercadolivre', name: '' });
 
     const handleAuthML = () => {
+        if (!formData.name.trim()) return;
+
         const url = import.meta.env.VITE_ML_URL_AUTH;
         const width = 600;
         const height = 750;
         const left = (window.screen.width / 2) - (width / 2);
         const top = (window.screen.height / 2) - (height / 2);
 
-        window.open(
-            url, 
-            'MLAuth', 
-            `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
-        );
+        // window.open(
+        //     url, 
+        //     'MLAuth', 
+        //     `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
+        // );
+
+        alert("Cadastrar")
+
+        setIsModalOpen(false);
     };
 
     const getStatusClass = (status) => {
@@ -43,7 +51,7 @@ export function MarketplaceIntegrations() {
                     <h1 className={styles.mainTitle}>Integração com Marketplaces</h1>
                     <p className={styles.subtitle}>Conecte e gerencie suas vendas em múltiplos canais de forma centralizada.</p>
                 </div>
-                <button className={styles.btnAdd} onClick={handleAuthML}>
+                <button className={styles.btnAdd} onClick={() => setIsModalOpen(true)}>
                     <Plus size={20} />
                     <span>Adicionar Nova Integração</span>
                 </button>
@@ -53,6 +61,7 @@ export function MarketplaceIntegrations() {
                 <div className={styles.grid}>
                     {integrations.map((item) => (
                         <div key={item.id} className={styles.card}>
+                            {/* Card Content... */}
                             <div className={styles.cardTop}>
                                 <div className={styles.brandInfo}>
                                     <div className={styles.logoBox}>{item.logo}</div>
@@ -65,34 +74,64 @@ export function MarketplaceIntegrations() {
                                     <div className={styles.dot} /> {item.status}
                                 </span>
                             </div>
-
                             <div className={styles.cardActions}>
-                                <button className={styles.actionBtn} title="Editar">
-                                    <Edit3 size={18} />
-                                    <span>Editar</span>
-                                </button>
-                                <button className={styles.actionBtn} title="Sincronizar">
-                                    <RefreshCw size={18} />
-                                    <span>Sincronizar</span>
-                                </button>
-                                <button className={`${styles.actionBtn} ${styles.btnDelete}`} title="Remover">
-                                    <Trash2 size={18} />
-                                    <span>Remover</span>
-                                </button>
+                                <button className={styles.actionBtn}><Edit3 size={18} /><span>Editar</span></button>
+                                <button className={styles.actionBtn}><RefreshCw size={18} /><span>Sincronizar</span></button>
+                                <button className={`${styles.actionBtn} ${styles.btnDelete}`}><Trash2 size={18} /><span>Remover</span></button>
                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
                 <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>
-                        <RefreshCw size={48} />
-                    </div>
+                    <div className={styles.emptyIcon}><RefreshCw size={48} /></div>
                     <h2>Nenhuma integração cadastrada</h2>
                     <p>Conecte seu primeiro marketplace para começar a sincronizar seu estoque e pedidos automaticamente.</p>
-                    <button className={styles.btnAdd} onClick={handleAuthML}>
+                    <button className={styles.btnAdd} onClick={() => setIsModalOpen(true)}>
                         <Plus size={20} /> Adicionar Integração
                     </button>
+                </div>
+            )}
+
+            {/* Modal de Configuração */}
+            {isModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContainer}>
+                        <div className={styles.modalHeader}>
+                            <h2>Nova Integração</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.inputGroup}>
+                                <label><Store size={16} /> Marketplace</label>
+                                <select 
+                                    value={formData.marketplace}
+                                    onChange={(e) => setFormData({...formData, marketplace: e.target.value})}
+                                >
+                                    <option value="mercadolivre">Mercado Livre</option>
+                                </select>
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label><Tag size={16} /> Nome da Integração</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Ex: Loja Principal, Filial..."
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                            <button 
+                                className={styles.btnSubmit} 
+                                onClick={handleAuthML}
+                                disabled={!formData.name.trim()}
+                            >
+                                Prosseguir
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
