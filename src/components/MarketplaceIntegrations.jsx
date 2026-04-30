@@ -1,20 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit3, Trash2, RefreshCw, X, Store, Tag } from 'lucide-react';
 import styles from './style/MarketplaceIntegrations.module.css';
 import { API_BASE_URL } from '../api';
+import { toast } from 'react-toastify';
 
-const MOCK_INTEGRATIONS = [
-    { id: 1, name: 'Mercado Livre', type: 'Loja Principal', status: 'Ativo', logo: '🤝' },
-    { id: 2, name: 'Amazon Brasil', type: 'Filial SP', status: 'Ativo', logo: '📦' },
-    { id: 3, name: 'Shopee', type: 'Novas Vendas', status: 'Pendente', logo: '🧡' },
-    { id: 4, name: 'Magalu', type: 'Catálogo Parado', status: 'Erro', logo: 'Ⓜ️' },
-    { id: 5, name: 'AliExpress', type: 'Global - Envios', status: 'Ativo', logo: '🔴' },
-];
 
 export function MarketplaceIntegrations() {
-    const [integrations] = useState([]); // Troque para MOCK_INTEGRATIONS para ver a lista
+
+    const [integrations, setIntegrations] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ marketplace: 'MERCADO_LIVRE', nome: '' });
+
+    useEffect(() => {
+        fetchIntegrations();
+    }, []);
+
+    const fetchIntegrations = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("authToken");
+            const response = await fetch(`${API_BASE_URL}/integracoes`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            
+            if (data.sucesso) {
+                setIntegrations(data.integracoes);
+            } else {
+                setIntegrations([]);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar integrações:', error);
+            toast.error("Erro ao carregar integrações");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const closeModal = () => {
         setIsModalOpen(false);
@@ -35,8 +60,7 @@ export function MarketplaceIntegrations() {
         //     'MLAuth', 
         //     `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
         // );
-
-        alert("Cadastrar")
+        
         closeModal();
     };
 
@@ -51,12 +75,23 @@ export function MarketplaceIntegrations() {
                 },
                 body: JSON.stringify(formData)
             });
+
             const data = await response.json();
-            if (data.sucesso) {
+            
+            if(!data.sucesso) {
                 closeModal();
+                toast.error(data.message)
+                return;
             }
+
+            closeModal();
+            toast.success("Integração cadastrada com sucesso!");
+            fetchIntegrations();
+
+
         } catch (error) {
             console.error('Erro:', error);  
+            toast.error("Erro ao cadastrar integração");
         }
     }
 
@@ -82,21 +117,29 @@ export function MarketplaceIntegrations() {
                 </button>
             </header>
 
-            {integrations.length > 0 ? (
+            {loading ? (
+                <div className={styles.loadingContainer}>
+                    <RefreshCw className={styles.spin} size={40} />
+                    <p>Carregando integrações...</p>
+                </div>
+            ) : integrations.length > 0 ? (
                 <div className={styles.grid}>
                     {integrations.map((item) => (
                         <div key={item.id} className={styles.card}>
-                            {/* Card Content... */}
                             <div className={styles.cardTop}>
                                 <div className={styles.brandInfo}>
-                                    <div className={styles.logoBox}>{item.logo}</div>
+                                    <div className={styles.logoBox}>
+                                        {item.marketplace === 'MERCADO_LIVRE' ? '🤝' : '📦'}
+                                    </div>
                                     <div>
-                                        <h3>{item.name}</h3>
-                                        <span className={styles.typeTag}>{item.type}</span>
+                                        <h3>{item.nome}</h3>
+                                        <span className={styles.typeTag}>
+                                            {item.marketplace === 'MERCADO_LIVRE' ? 'Mercado Livre' : item.marketplace}
+                                        </span>
                                     </div>
                                 </div>
-                                <span className={`${styles.statusBadge} ${getStatusClass(item.status)}`}>
-                                    <div className={styles.dot} /> {item.status}
+                                <span className={`${styles.statusBadge} ${styles.statusAtivo}`}>
+                                    <div className={styles.dot} /> Ativo
                                 </span>
                             </div>
                             <div className={styles.cardActions}>
@@ -108,6 +151,7 @@ export function MarketplaceIntegrations() {
                     ))}
                 </div>
             ) : (
+
                 <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}><RefreshCw size={48} /></div>
                     <h2>Nenhuma integração cadastrada</h2>

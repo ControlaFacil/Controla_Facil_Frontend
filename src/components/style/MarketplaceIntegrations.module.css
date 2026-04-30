@@ -349,3 +349,31 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* Loading State */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 0;
+    gap: 20px;
+    color: #64748b;
+    animation: fadeIn 0.5s ease;
+}
+
+.spin {
+    animation: rotate 2s linear infinite;
+    color: #0C3447;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
