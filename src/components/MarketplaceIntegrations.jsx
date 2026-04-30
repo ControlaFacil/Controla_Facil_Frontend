@@ -11,9 +11,14 @@ const MOCK_INTEGRATIONS = [
 ];
 
 export function MarketplaceIntegrations() {
-    const [integrations] = useState([]); // Troque para MOCK_INTEGRATIONS para ver a lista
+    const [integrations] = useState(MOCK_INTEGRATIONS); // Troque para MOCK_INTEGRATIONS para ver a lista
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ marketplace: 'mercadolivre', name: '' });
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setFormData({ marketplace: 'mercadolivre', name: '' });
+    };
 
     const handleAuthML = () => {
         if (!formData.name.trim()) return;
@@ -31,8 +36,7 @@ export function MarketplaceIntegrations() {
         // );
 
         alert("Cadastrar")
-
-        setIsModalOpen(false);
+        closeModal();
     };
 
     const getStatusClass = (status) => {
@@ -99,7 +103,7 @@ export function MarketplaceIntegrations() {
                     <div className={styles.modalContainer}>
                         <div className={styles.modalHeader}>
                             <h2>Nova Integração</h2>
-                            <button className={styles.closeBtn} onClick={() => setIsModalOpen(false)}><X size={20} /></button>
+                            <button className={styles.closeBtn} onClick={closeModal}><X size={20} /></button>
                         </div>
                         <div className={styles.modalBody}>
                             <div className={styles.inputGroup}>
@@ -122,14 +126,8 @@ export function MarketplaceIntegrations() {
                             </div>
                         </div>
                         <div className={styles.modalFooter}>
-                            <button className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                            <button 
-                                className={styles.btnSubmit} 
-                                onClick={handleAuthML}
-                                disabled={!formData.name.trim()}
-                            >
-                                Prosseguir
-                            </button>
+                            <button className={styles.btnCancel} onClick={closeModal}>Cancelar</button>
+                            <button className={styles.btnSubmit} onClick={handleAuthML} disabled={!formData.name.trim()} >Prosseguir</button>
                         </div>
                     </div>
                 </div>
