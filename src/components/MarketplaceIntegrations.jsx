@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit3, Trash2, RefreshCw, X, Store, Tag } from 'lucide-react';
 import styles from './style/MarketplaceIntegrations.module.css';
+import { API_BASE_URL } from '../api';
 
 const MOCK_INTEGRATIONS = [
     { id: 1, name: 'Mercado Livre', type: 'Loja Principal', status: 'Ativo', logo: '🤝' },
@@ -11,13 +12,13 @@ const MOCK_INTEGRATIONS = [
 ];
 
 export function MarketplaceIntegrations() {
-    const [integrations] = useState(MOCK_INTEGRATIONS); // Troque para MOCK_INTEGRATIONS para ver a lista
+    const [integrations] = useState([]); // Troque para MOCK_INTEGRATIONS para ver a lista
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [formData, setFormData] = useState({ marketplace: 'mercadolivre', name: '' });
+    const [formData, setFormData] = useState({ marketplace: 'MERCADO_LIVRE', nome: '' });
 
     const closeModal = () => {
         setIsModalOpen(false);
-        setFormData({ marketplace: 'mercadolivre', name: '' });
+        setFormData({ marketplace: 'MERCADO_LIVRE', nome: '' });
     };
 
     const handleAuthML = () => {
@@ -38,6 +39,26 @@ export function MarketplaceIntegrations() {
         alert("Cadastrar")
         closeModal();
     };
+
+    const cadastrarIntegracao = async () => {
+        try {
+            const token = localStorage.getItem("authToken");
+            const response = await fetch(`${API_BASE_URL}/integracoes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await response.json();
+            if (data.sucesso) {
+                closeModal();
+            }
+        } catch (error) {
+            console.error('Erro:', error);  
+        }
+    }
 
     const getStatusClass = (status) => {
         switch (status) {
@@ -112,7 +133,7 @@ export function MarketplaceIntegrations() {
                                     value={formData.marketplace}
                                     onChange={(e) => setFormData({...formData, marketplace: e.target.value})}
                                 >
-                                    <option value="mercadolivre">Mercado Livre</option>
+                                    <option value="MERCADO_LIVRE">Mercado Livre</option>
                                 </select>
                             </div>
                             <div className={styles.inputGroup}>
@@ -120,14 +141,14 @@ export function MarketplaceIntegrations() {
                                 <input 
                                     type="text" 
                                     placeholder="Ex: Loja Principal, Filial..."
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    value={formData.nome}
+                                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
                                 />
                             </div>
                         </div>
                         <div className={styles.modalFooter}>
                             <button className={styles.btnCancel} onClick={closeModal}>Cancelar</button>
-                            <button className={styles.btnSubmit} onClick={handleAuthML} disabled={!formData.name.trim()} >Prosseguir</button>
+                            <button className={styles.btnSubmit} onClick={cadastrarIntegracao} disabled={!formData.nome.trim()} >Prosseguir</button>
                         </div>
                     </div>
                 </div>
