@@ -46,22 +46,22 @@ export function MarketplaceIntegrations() {
         setFormData({ marketplace: 'MERCADO_LIVRE', nome: '' });
     };
 
-    const handleAuthML = () => {
-        if (!formData.name.trim()) return;
+    const handleSync = (marketplace) => {
+        if (marketplace === 'MERCADO_LIVRE') {
+            const url = import.meta.env.VITE_ML_URL_AUTH;
+            const width = 600;
+            const height = 750;
+            const left = (window.screen.width / 2) - (width / 2);
+            const top = (window.screen.height / 2) - (height / 2);
 
-        const url = import.meta.env.VITE_ML_URL_AUTH;
-        const width = 600;
-        const height = 750;
-        const left = (window.screen.width / 2) - (width / 2);
-        const top = (window.screen.height / 2) - (height / 2);
-
-        // window.open(
-        //     url, 
-        //     'MLAuth', 
-        //     `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
-        // );
-        
-        closeModal();
+            window.open(
+                url, 
+                'MLAuth', 
+                `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
+            );
+        } else {
+            toast.info("Sincronização não disponível para este marketplace no momento.");
+        }
     };
 
     const cadastrarIntegracao = async () => {
@@ -144,7 +144,7 @@ export function MarketplaceIntegrations() {
                             </div>
                             <div className={styles.cardActions}>
                                 <button className={styles.actionBtn}><Edit3 size={18} /><span>Editar</span></button>
-                                <button className={styles.actionBtn}><RefreshCw size={18} /><span>Sincronizar</span></button>
+                                <button className={styles.actionBtn} onClick={() => handleSync(item.marketplace)}><RefreshCw size={18} /><span>Sincronizar</span></button>
                                 <button className={`${styles.actionBtn} ${styles.btnDelete}`}><Trash2 size={18} /><span>Remover</span></button>
                             </div>
                         </div>
