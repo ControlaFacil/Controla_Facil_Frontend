@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 export function MarketplaceIntegrations() {
 
     const [integrations, setIntegrations] = useState([]);
+    const [syncedIds, setSyncedIds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({ marketplace: 'MERCADO_LIVRE', nome: '' });
@@ -46,7 +47,7 @@ export function MarketplaceIntegrations() {
         setFormData({ marketplace: 'MERCADO_LIVRE', nome: '' });
     };
 
-    const handleSync = (marketplace) => {
+    const handleSync = (marketplace, id) => {
         if (marketplace === 'MERCADO_LIVRE') {
             const url = import.meta.env.VITE_ML_URL_AUTH;
             const width = 600;
@@ -59,6 +60,8 @@ export function MarketplaceIntegrations() {
                 'MLAuth', 
                 `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
             );
+            
+            setSyncedIds(prev => [...prev, id]);
         } else {
             toast.info("Sincronização não disponível para este marketplace no momento.");
         }
@@ -138,13 +141,13 @@ export function MarketplaceIntegrations() {
                                         </span>
                                     </div>
                                 </div>
-                                <span className={`${styles.statusBadge} ${styles.statusAtivo}`}>
-                                    <div className={styles.dot} /> Ativo
+                                <span className={`${styles.statusBadge} ${syncedIds.includes(item.id) ? styles.statusAtivo : styles.statusPendente}`}>
+                                    <div className={styles.dot} /> {syncedIds.includes(item.id) ? 'Ativo' : 'Pendente'}
                                 </span>
                             </div>
                             <div className={styles.cardActions}>
                                 <button className={styles.actionBtn}><Edit3 size={18} /><span>Editar</span></button>
-                                <button className={styles.actionBtn} onClick={() => handleSync(item.marketplace)}><RefreshCw size={18} /><span>Sincronizar</span></button>
+                                <button className={styles.actionBtn} onClick={() => handleSync(item.marketplace, item.id)}><RefreshCw size={18} /><span>Sincronizar</span></button>
                                 <button className={`${styles.actionBtn} ${styles.btnDelete}`}><Trash2 size={18} /><span>Remover</span></button>
                             </div>
                         </div>
