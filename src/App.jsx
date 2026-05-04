@@ -16,6 +16,8 @@ import { MarketplaceIntegrations } from "./components/MarketplaceIntegrations";
 import { MarketplaceAuthSuccess } from "./components/MarketplaceAuthSuccess";
 import { MarketplaceAuthError } from "./components/MarketplaceAuthError";
 import { MarketplaceCallback } from "./components/MarketplaceCallback";
+import { Pedidos } from "./components/Pedidos";
+import { Relatorios } from "./components/Relatorios";
 import './global.css';
 
 function LayoutWithHeader() {
@@ -49,7 +51,9 @@ function LayoutWithHeader() {
           <Route path="/cadastro-parceiro" element={<CadastroParceiro />} />
           <Route path="/cadastro-produto" element={<CadastroProduto />} />
           <Route path="/estoque" element={<Estoque />} />
+          <Route path="/pedidos" element={<Pedidos />} />
           <Route path="/marketplaces" element={<MarketplaceIntegrations />} />
+          <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/ml-auth-success" element={<MarketplaceAuthSuccess />} />
           <Route path="/ml-auth-error" element={<MarketplaceAuthError />} />
           <Route path="/ml-callback" element={<MarketplaceCallback />} />

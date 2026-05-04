@@ -17,19 +17,22 @@
 
 /* --- Layout Principal --- */
 .container {
-    padding: 30px;
-    background-color: var(--light-grey-bg);
-    min-height: calc(100vh - 65px);
-    color: var(--text-color-dark);
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: calc(var(--topbar-height, 65px) + 40px) 40px 60px;
+    margin-left: var(--sidebar-width, 250px);
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #f8fafc, #f1f5f9);
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.6s ease-out;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pageTitle {
-    font-size: 1.8em;
-    margin-bottom: 30px;
-    color: var(--dark-blue-grey);
-    font-weight: 600;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0C3447;
+    margin: 0 0 30px 0;
+    letter-spacing: -0.03em;
 }
 
 /* --- Seção de Cards (Visão Geral) --- */
@@ -159,10 +162,14 @@ tbody tr:hover {
 }
 
 /* Responsividade */
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
+@media (max-width: 1024px) {
+    .container { 
+        padding: 110px 20px 40px; 
+        margin-left: 0;
     }
+}
+
+@media (max-width: 768px) {
     .pageTitle {
         font-size: 1.5em;
     }
@@ -177,3 +184,5 @@ tbody tr:hover {
         padding: 15px;
     }
 }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }

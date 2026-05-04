@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, User, LogOut, ChevronDown, Menu, X, ChevronLeft, ChevronRight, Store } from 'lucide-react';
+import { LayoutDashboard, User, LogOut, ChevronDown, Menu, X, ChevronLeft, ChevronRight, Store, ShoppingCart, Box, BarChart3 } from 'lucide-react';
 import { API_BASE_URL } from '../api';
 import styles from './style/HeaderU.module.css';
 
@@ -32,7 +32,10 @@ export function HeaderU({ isCollapsed, onToggle }) {
 
     const navItems = [
         { to: "/home", label: "Menu Inicial", icon: <LayoutDashboard size={22} /> },
+        { to: "/pedidos", label: "Controle de Pedidos", icon: <ShoppingCart size={22} /> },
+        { to: "/estoque", label: "Estoque", icon: <Box size={22} /> },
         { to: "/marketplaces", label: "Marketplaces", icon: <Store size={22} /> },
+        { to: "/relatorios", label: "Relatórios", icon: <BarChart3 size={22} /> },
         { to: "/meus-dados", label: "Meu Perfil", icon: <User size={22} /> },
     ];
 
