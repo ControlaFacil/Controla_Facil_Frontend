@@ -58,13 +58,13 @@ export function HomeU() {
             route: "/relatorios",
             color: "#8b5cf6"
         },
-        {
-            title: "Análise de Dados",
-            desc: "Insights avançados processados para tomada de decisão estratégica.",
-            icon: <Database size={32} />,
-            route: "/dashboard",
-            color: "#06b6d4"
-        }
+        // {
+        //     title: "Análise de Dados",
+        //     desc: "Insights avançados processados para tomada de decisão estratégica.",
+        //     icon: <Database size={32} />,
+        //     route: "/dashboard",
+        //     color: "#06b6d4"
+        // }
     ];
 
     

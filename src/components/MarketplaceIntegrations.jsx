@@ -11,6 +11,7 @@ export function MarketplaceIntegrations() {
     const [syncedIds, setSyncedIds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ marketplace: 'MERCADO_LIVRE', nome: '' });
 
     useEffect(() => {
@@ -44,7 +45,14 @@ export function MarketplaceIntegrations() {
 
     const closeModal = () => {
         setIsModalOpen(false);
+        setEditingId(null);
         setFormData({ marketplace: 'MERCADO_LIVRE', nome: '' });
+    };
+
+    const openEditModal = (item) => {
+        setFormData({ marketplace: item.marketplace, nome: item.nome });
+        setEditingId(item.id);
+        setIsModalOpen(true);
     };
 
     const handleSync = (marketplace, id) => {
@@ -67,36 +75,66 @@ export function MarketplaceIntegrations() {
         }
     };
 
-    const cadastrarIntegracao = async () => {
+    const salvarIntegracao = async () => {
         try {
             const token = localStorage.getItem("authToken");
+            const isEditing = !!editingId;
+            const method = isEditing ? 'PUT' : 'POST';
+            const bodyData = isEditing ? { ...formData, id: editingId } : formData;
+
             const response = await fetch(`${API_BASE_URL}/integracoes`, {
-                method: 'POST',
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(bodyData)
             });
 
             const data = await response.json();
             
             if(!data.sucesso) {
                 closeModal();
-                toast.error(data.message)
+                toast.error(data.message || "Erro na operação");
                 return;
             }
 
             closeModal();
-            toast.success("Integração cadastrada com sucesso!");
+            toast.success(isEditing ? "Integração atualizada com sucesso!" : "Integração cadastrada com sucesso!");
             fetchIntegrations();
-
 
         } catch (error) {
             console.error('Erro:', error);  
-            toast.error("Erro ao cadastrar integração");
+            toast.error("Erro ao salvar integração");
         }
-    }
+    };
+
+    const excluirIntegracao = async (id) => {
+        if (!window.confirm("Tem certeza que deseja remover esta integração?")) return;
+        
+        try {
+            const token = localStorage.getItem("authToken");
+            const response = await fetch(`${API_BASE_URL}/integracoes/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            
+            if(!data.sucesso) {
+                toast.error(data.message || "Erro ao remover integração");
+                return;
+            }
+
+            toast.success("Integração removida com sucesso!");
+            fetchIntegrations();
+        } catch (error) {
+            console.error('Erro:', error);  
+            toast.error("Erro ao remover integração");
+        }
+    };
 
     const getStatusClass = (status) => {
         switch (status) {
@@ -146,9 +184,9 @@ export function MarketplaceIntegrations() {
                                 </span>
                             </div>
                             <div className={styles.cardActions}>
-                                <button className={styles.actionBtn}><Edit3 size={18} /><span>Editar</span></button>
+                                <button className={styles.actionBtn} onClick={() => openEditModal(item)}><Edit3 size={18} /><span>Editar</span></button>
                                 <button className={styles.actionBtn} onClick={() => handleSync(item.marketplace, item.id)}><RefreshCw size={18} /><span>Sincronizar</span></button>
-                                <button className={`${styles.actionBtn} ${styles.btnDelete}`}><Trash2 size={18} /><span>Remover</span></button>
+                                <button className={`${styles.actionBtn} ${styles.btnDelete}`} onClick={() => excluirIntegracao(item.id)}><Trash2 size={18} /><span>Remover</span></button>
                             </div>
                         </div>
                     ))}
@@ -170,7 +208,7 @@ export function MarketplaceIntegrations() {
                 <div className={styles.modalOverlay}>
                     <div className={styles.modalContainer}>
                         <div className={styles.modalHeader}>
-                            <h2>Nova Integração</h2>
+                            <h2>{editingId ? "Editar Integração" : "Nova Integração"}</h2>
                             <button className={styles.closeBtn} onClick={closeModal}><X size={20} /></button>
                         </div>
                         <div className={styles.modalBody}>
@@ -179,6 +217,7 @@ export function MarketplaceIntegrations() {
                                 <select 
                                     value={formData.marketplace}
                                     onChange={(e) => setFormData({...formData, marketplace: e.target.value})}
+                                    disabled={!!editingId}
                                 >
                                     <option value="MERCADO_LIVRE">Mercado Livre</option>
                                 </select>
@@ -195,7 +234,7 @@ export function MarketplaceIntegrations() {
                         </div>
                         <div className={styles.modalFooter}>
                             <button className={styles.btnCancel} onClick={closeModal}>Cancelar</button>
-                            <button className={styles.btnSubmit} onClick={cadastrarIntegracao} disabled={!formData.nome.trim()} >Prosseguir</button>
+                            <button className={styles.btnSubmit} onClick={salvarIntegracao} disabled={!formData.nome.trim()} >Salvar</button>
                         </div>
                     </div>
                 </div>
