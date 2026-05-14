@@ -3,6 +3,7 @@ import { Plus, Edit3, Trash2, RefreshCw, X, Store, Tag } from 'lucide-react';
 import styles from './style/MarketplaceIntegrations.module.css';
 import { API_BASE_URL } from '../api';
 import { toast } from 'react-toastify';
+import { StatusIntegracao, Marketplace } from '../utils/enums';
 
 
 export function MarketplaceIntegrations() {
@@ -56,7 +57,7 @@ export function MarketplaceIntegrations() {
     };
 
     const handleSync = (marketplace, id) => {
-        if (marketplace === 'MERCADO_LIVRE') {
+        if (marketplace == Marketplace.MERCADO_LIVRE) {
             const url = import.meta.env.VITE_ML_URL_AUTH;
             const width = 600;
             const height = 750;
@@ -69,7 +70,6 @@ export function MarketplaceIntegrations() {
                 `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=no,resizable=yes`
             );
             
-            setSyncedIds(prev => [...prev, id]);
         } else {
             toast.info("Sincronização não disponível para este marketplace no momento.");
         }
@@ -136,12 +136,22 @@ export function MarketplaceIntegrations() {
         }
     };
 
-    const getStatusClass = (status) => {
+    const getStatus = (status, isSynced) => {
+        if (isSynced) {
+            return { statusClass: styles.statusAtivo, statusText: 'Ativo' };
+        }
+
         switch (status) {
-            case 'Ativo': return styles.statusAtivo;
-            case 'Pendente': return styles.statusPendente;
-            case 'Erro': return styles.statusErro;
-            default: return '';
+            case StatusIntegracao.ATIVO: 
+                return { statusClass: styles.statusAtivo, statusText: 'Ativo' };
+            case StatusIntegracao.INATIVO: 
+                return { statusClass: styles.statusErro, statusText: 'Inativo' };
+            case StatusIntegracao.PENDENTE: 
+                return { statusClass: styles.statusPendente, statusText: 'Pendente' };
+            case StatusIntegracao.EXCLUIDO: 
+                return { statusClass: styles.statusExcluido || styles.statusErro, statusText: 'Excluído' };
+            default:
+                return { statusClass: styles.statusPendente, statusText: 'Pendente' };
         }
     };
 
@@ -170,18 +180,23 @@ export function MarketplaceIntegrations() {
                             <div className={styles.cardTop}>
                                 <div className={styles.brandInfo}>
                                     <div className={styles.logoBox}>
-                                        {item.marketplace === 'MERCADO_LIVRE' ? '🤝' : '📦'}
+                                        {item.marketplace == Marketplace.MERCADO_LIVRE ? '🤝' : '📦'}
                                     </div>
                                     <div>
                                         <h3>{item.nome}</h3>
                                         <span className={styles.typeTag}>
-                                            {item.marketplace === 'MERCADO_LIVRE' ? 'Mercado Livre' : item.marketplace}
+                                            {item.marketplace == Marketplace.MERCADO_LIVRE ? 'Mercado Livre' : item.marketplace}
                                         </span>
                                     </div>
                                 </div>
-                                <span className={`${styles.statusBadge} ${syncedIds.includes(item.id) ? styles.statusAtivo : styles.statusPendente}`}>
-                                    <div className={styles.dot} /> {syncedIds.includes(item.id) ? 'Ativo' : 'Pendente'}
-                                </span>
+                                {(() => {
+                                    const { statusClass, statusText } = getStatus(item.status, syncedIds.includes(item.id));
+                                    return (
+                                        <span className={`${styles.statusBadge} ${statusClass}`}>
+                                            <div className={styles.dot} /> {statusText}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                             <div className={styles.cardActions}>
                                 <button className={styles.actionBtn} onClick={() => openEditModal(item)}><Edit3 size={18} /><span>Editar</span></button>
