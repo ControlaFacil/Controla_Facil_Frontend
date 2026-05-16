@@ -57,7 +57,6 @@ export function MarketplaceIntegrations() {
     };
 
     const handleSync = (marketplace, id) => {
-        debugger;
         if (marketplace == Marketplace.MERCADO_LIVRE) {
             localStorage.setItem('currentIntegrationId', id);
             const url = import.meta.env.VITE_ML_URL_AUTH;
@@ -192,7 +191,7 @@ export function MarketplaceIntegrations() {
                                     </div>
                                 </div>
                                 {(() => {
-                                    const { statusClass, statusText } = getStatus(item.status, syncedIds.includes(item.id));
+                                    const { statusClass, statusText } = getStatus(item.ativo, syncedIds.includes(item.id));
                                     return (
                                         <span className={`${styles.statusBadge} ${statusClass}`}>
                                             <div className={styles.dot} /> {statusText}
