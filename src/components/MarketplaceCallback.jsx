@@ -22,8 +22,9 @@ export function MarketplaceCallback() {
 
             try {
                 const token = localStorage.getItem('authToken');
+                const integracaoId = localStorage.getItem('currentIntegrationId');
                 
-                const response = await fetch(`${API_BASE_URL}/integracoes/mercado-livre/auth?code=${code}`, {
+                const response = await fetch(`${API_BASE_URL}/integracoes/mercado-livre/auth?code=${code}&integracaoId=${integracaoId}`, {
                     method: 'GET',
                     headers: { 
                         'Authorization': `Bearer ${token}`,
@@ -34,6 +35,7 @@ export function MarketplaceCallback() {
                 const data = await response.json();
 
                 if (data.sucesso) {
+                    localStorage.removeItem('currentIntegrationId');
                     navigate('/ml-auth-success');
                 } else {
                     navigate('/ml-auth-error');

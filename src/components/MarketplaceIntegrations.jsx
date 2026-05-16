@@ -57,7 +57,9 @@ export function MarketplaceIntegrations() {
     };
 
     const handleSync = (marketplace, id) => {
+        debugger;
         if (marketplace == Marketplace.MERCADO_LIVRE) {
+            localStorage.setItem('currentIntegrationId', id);
             const url = import.meta.env.VITE_ML_URL_AUTH;
             const width = 600;
             const height = 750;
