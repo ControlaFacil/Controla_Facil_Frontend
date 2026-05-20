@@ -161,6 +161,35 @@ tbody tr:hover {
     color: var(--color-esgotado);
 }
 
+/* Empty State */
+.emptyState {
+    background: white;
+    border-radius: 32px;
+    padding: 100px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    border: 2px dashed #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
+
+.emptyIcon {
+    width: 120px;
+    height: 120px;
+    background: #f8fafc;
+    color: #cbd5e1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.emptyState h2 { color: #0C3447; font-size: 1.8rem; font-weight: 800; margin: 0; }
+.emptyState p { color: #64748b; max-width: 450px; line-height: 1.7; font-size: 1.1rem; }
+
 /* Responsividade */
 @media (max-width: 1024px) {
     .container { 
