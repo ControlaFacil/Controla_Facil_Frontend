@@ -190,6 +190,27 @@ tbody tr:hover {
 .emptyState h2 { color: #0C3447; font-size: 1.8rem; font-weight: 800; margin: 0; }
 .emptyState p { color: #64748b; max-width: 450px; line-height: 1.7; font-size: 1.1rem; }
 
+.btnAdd {
+    background: #5FC16C;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 20px rgba(95, 193, 108, 0.2);
+}
+
+.btnAdd:hover {
+    transform: translateY(-3px);
+    background: #4caf5a;
+    box-shadow: 0 12px 28px rgba(95, 193, 108, 0.4);
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
     .container { 

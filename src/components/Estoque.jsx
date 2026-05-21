@@ -1,57 +1,58 @@
-import React from "react";
-import { PackageX } from "lucide-react";
+import React, { useState } from "react";
+import { PackageX, Plus } from "lucide-react";
 import styles from "./style/Estoque.module.css";
+import { ModalProdutos } from "./ModalProdutos";
 
 const produtos = [
-  {
-    nome: "Produto A",
-    codigo: "ID001",
-    quantidade: 80,
-    minimo: 20,
-    preco: 2.5,
-  },
-  {
-    nome: "Produto B",
-    codigo: "ID002",
-    quantidade: 50,
-    minimo: 15,
-    preco: 3.2,
-  },
-  {
-    nome: "Tinta Impressora XPTO",
-    codigo: "TN001",
-    quantidade: 3,
-    minimo: 5,
-    preco: 45.0,
-  },
-  {
-    nome: "Mouse Sem Fio ABC",
-    codigo: "MS005",
-    quantidade: 0,
-    minimo: 10,
-    preco: 60.0,
-  },
-  {
-    nome: "Teclado Gamer",
-    codigo: "TG002",
-    quantidade: 8,
-    minimo: 7,
-    preco: 120.0,
-  },
-  {
-    nome: 'Monitor LED 24"',
-    codigo: "MN007",
-    quantidade: 25,
-    minimo: 10,
-    preco: 800.0,
-  },
-  {
-    nome: "Caderno 10 Matérias",
-    codigo: "CD010",
-    quantidade: 180,
-    minimo: 30,
-    preco: 15.0,
-  },
+  // {
+  //   nome: "Produto A",
+  //   codigo: "ID001",
+  //   quantidade: 80,
+  //   minimo: 20,
+  //   preco: 2.5,
+  // },
+  // {
+  //   nome: "Produto B",
+  //   codigo: "ID002",
+  //   quantidade: 50,
+  //   minimo: 15,
+  //   preco: 3.2,
+  // },
+  // {
+  //   nome: "Tinta Impressora XPTO",
+  //   codigo: "TN001",
+  //   quantidade: 3,
+  //   minimo: 5,
+  //   preco: 45.0,
+  // },
+  // {
+  //   nome: "Mouse Sem Fio ABC",
+  //   codigo: "MS005",
+  //   quantidade: 0,
+  //   minimo: 10,
+  //   preco: 60.0,
+  // },
+  // {
+  //   nome: "Teclado Gamer",
+  //   codigo: "TG002",
+  //   quantidade: 8,
+  //   minimo: 7,
+  //   preco: 120.0,
+  // },
+  // {
+  //   nome: 'Monitor LED 24"',
+  //   codigo: "MN007",
+  //   quantidade: 25,
+  //   minimo: 10,
+  //   preco: 800.0,
+  // },
+  // {
+  //   nome: "Caderno 10 Matérias",
+  //   codigo: "CD010",
+  //   quantidade: 180,
+  //   minimo: 30,
+  //   preco: 15.0,
+  // },
 ];
 
 function getStatusClass(quantidade, minimo) {
@@ -67,6 +68,8 @@ function getStatusOrder(quantidade, minimo) {
 }
 
 export function Estoque() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const produtosOrdenados = [...produtos].sort(
     (a, b) =>
       getStatusOrder(a.quantidade, a.minimo) -
@@ -162,8 +165,13 @@ export function Estoque() {
           </div>
           <h2>Nenhum produto em estoque</h2>
           <p>Você ainda não possui produtos cadastrados no seu estoque.</p>
+          <button className={styles.btnAdd} onClick={() => setIsModalOpen(true)}>
+            <Plus size={20} /> Adicionar Produto
+          </button>
         </div>
       )}
+      
+      <ModalProdutos isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </main>
   );
 }
