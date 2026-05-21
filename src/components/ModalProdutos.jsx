@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, UploadCloud, Trash2, Star, GripVertical } from 'lucide-react';
 import {
   DndContext,
@@ -105,6 +105,30 @@ export function ModalProdutos({ isOpen, onClose }) {
 
   // --- Aba 3: Imagens ---
   const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(1);
+      setFormData({
+        titulo: '',
+        sku: '',
+        categoria: '',
+        preco: '',
+        gtin: '',
+        condicao: 'new',
+        descricao: '',
+        estoqueAtual: '',
+        estoqueMinimo: '',
+      });
+      setCharacteristics({
+        marca: '',
+        modelo: '',
+        cor: '',
+        material: '',
+      });
+      setImages([]);
+    }
+  }, [isOpen]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
