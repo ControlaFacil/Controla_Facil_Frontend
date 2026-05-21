@@ -181,7 +181,7 @@ export function MarketplaceIntegrations() {
                             <div className={styles.cardTop}>
                                 <div className={styles.brandInfo}>
                                     <div className={styles.logoBox}>
-                                        {item.marketplace == Marketplace.MERCADO_LIVRE ? '🤝' : '📦'}
+                                        {item.marketplace == Marketplace.MERCADO_LIVRE ? <img src={import.meta.env.VITE_BASE_URL_IMAGES + "/logo_ml.png"} alt="Mercado Livre" /> : '📦'}
                                     </div>
                                     <div>
                                         <h3>{item.nome}</h3>
