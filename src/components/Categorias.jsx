@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FolderX, Plus, Edit2, Trash2 } from 'lucide-react';
+import { FolderX, Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { ModalCategoria } from './ModalCategoria';
 import { ModalConfirmacao } from './ModalConfirmacao';
 import styles from './style/Categorias.module.css';
@@ -15,6 +15,7 @@ const mockCategorias = [
 
 export function Categorias() {
   const [categorias, setCategorias] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoriaEmEdicao, setCategoriaEmEdicao] = useState(null);
@@ -159,6 +160,10 @@ export function Categorias() {
     }
   }
 
+  const categoriasFiltradas = categorias.filter(cat =>
+    cat.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className={estoqueStyles.tabContent}>
       {loading ? (
@@ -176,7 +181,17 @@ export function Categorias() {
         </div>
       ) : (
         <div>
-          <div className={styles.headerActions}>
+          <div className={styles.headerActions} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ position: 'relative', width: '300px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Buscar categorias..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '10px 10px 10px 36px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none' }}
+              />
+            </div>
             <button className={estoqueStyles.btnAdd} onClick={() => handleOpenModal()}>
               <Plus size={20} /> Cadastrar Categoria
             </button>
@@ -193,10 +208,11 @@ export function Categorias() {
                   </tr>
                 </thead>
                 <tbody>
-                  {categorias.map((cat) => (
-                    <tr key={cat.id}>
-                      <td style={{ fontWeight: 600, color: '#0C3447' }}>{cat.nome}</td>
-                      <td style={{ color: '#64748b' }}>{cat.descricao || '-'}</td>
+                  {categoriasFiltradas.length > 0 ? (
+                    categoriasFiltradas.map((cat) => (
+                      <tr key={cat.id}>
+                        <td style={{ fontWeight: 600, color: '#0C3447' }}>{cat.nome}</td>
+                        <td style={{ color: '#64748b' }}>{cat.descricao || '-'}</td>
                       <td>
                         <div className={styles.actionsCell}>
                           <button 
@@ -216,7 +232,14 @@ export function Categorias() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="3" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                        Nenhuma categoria encontrada para "{searchTerm}".
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
