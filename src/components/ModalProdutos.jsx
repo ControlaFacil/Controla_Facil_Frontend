@@ -87,6 +87,7 @@ export function ModalProdutos({ isOpen, onClose }) {
     titulo: '',
     sku: '',
     categoria: '',
+    categoriaML: '',
     preco: '',
     gtin: '',
     condicao: 'new',
@@ -113,6 +114,7 @@ export function ModalProdutos({ isOpen, onClose }) {
         titulo: '',
         sku: '',
         categoria: '',
+        categoriaML: '',
         preco: '',
         gtin: '',
         condicao: 'new',
@@ -286,19 +288,19 @@ export function ModalProdutos({ isOpen, onClose }) {
                 <input type="text" name="sku" value={formData.sku} onChange={handleFormChange} placeholder="Ex: TEC-GAMER-01" />
               </div>
               <div className={styles.inputGroup}>
-                <label>Categoria</label>
+                <label>Categoria Interna</label>
                 <select name="categoria" value={formData.categoria} onChange={handleFormChange}>
-                  <option value="">Selecione uma categoria...</option>
-                  <option value="MLB1000">Eletrônicos</option>
-                  <option value="MLB1001">Informática</option>
-                  <option value="MLB1002">Casa e Decoração</option>
-                  <option value="MLB1003">Moda</option>
-                  <option value="MLB1004">Esportes</option>
-                  <option value="MLB1005">Beleza e Cuidado Pessoal</option>
-                  <option value="MLB1006">Ferramentas</option>
-                  <option value="MLB1007">Brinquedos</option>
-                  <option value="MLB1008">Automotivo</option>
-                  <option value="MLB1009">Saúde</option>
+                  <option value="">Selecione uma categoria interna...</option>
+                  <option value="eletronicos">Eletrônicos</option>
+                  <option value="informatica">Informática</option>
+                  <option value="casa_decoracao">Casa e Decoração</option>
+                  <option value="moda">Moda</option>
+                  <option value="esportes">Esportes</option>
+                  <option value="beleza">Beleza e Cuidado Pessoal</option>
+                  <option value="ferramentas">Ferramentas</option>
+                  <option value="brinquedos">Brinquedos</option>
+                  <option value="automotivo">Automotivo</option>
+                  <option value="saude">Saúde</option>
                 </select>
               </div>
               <div className={styles.inputGroup}>
@@ -337,6 +339,18 @@ export function ModalProdutos({ isOpen, onClose }) {
               <p className={styles.fullWidth} style={{ color: '#64748b', fontSize: '0.95rem' }}>
                 Preencha os atributos abaixo para melhorar o ranqueamento do seu anúncio no Mercado Livre. Campos gerados dinamicamente com base na categoria.
               </p>
+              <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                <label>Categoria Mercado Livre</label>
+                <select name="categoriaML" value={formData.categoriaML} onChange={handleFormChange}>
+                  <option value="">Selecione a categoria do Mercado Livre...</option>
+                  <option value="MLB1051">Celulares e Telefones</option>
+                  <option value="MLB1648">Informática -Componentes</option>
+                  <option value="MLB1430">Roupas e Calçados</option>
+                  <option value="MLB271599">Eletrônicos, Áudio e Vídeo</option>
+                  <option value="MLB5726">Eletrodomésticos</option>
+                  <option value="MLB1574">Casa, Móveis e Decoração</option>
+                </select>
+              </div>
               <div className={styles.inputGroup}>
                 <label>Marca</label>
                 <input type="text" name="marca" value={characteristics.marca} onChange={handleCharChange} placeholder="Ex: Redragon" />
