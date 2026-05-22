@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit3, Trash2, RefreshCw, X, Store, Tag } from 'lucide-react';
 import styles from './style/MarketplaceIntegrations.module.css';
 import { API_BASE_URL } from '../api';
+import { Loading } from './Loading';
 import { toast } from 'react-toastify';
 import { StatusIntegracao, Marketplace } from '../utils/enums';
 
@@ -170,10 +171,7 @@ export function MarketplaceIntegrations() {
             </header>
 
             {loading ? (
-                <div className={styles.loadingContainer}>
-                    <RefreshCw className={styles.spin} size={40} />
-                    <p>Carregando integrações...</p>
-                </div>
+                <Loading message="Carregando integrações..." />
             ) : integrations.length > 0 ? (
                 <div className={styles.grid}>
                     {integrations.map((item) => (

@@ -6,6 +6,7 @@ import styles from './style/Categorias.module.css';
 import estoqueStyles from './style/Estoque.module.css';
 import { API_BASE_URL } from '../api';
 import { toast } from 'react-toastify';
+import { Loading } from './Loading';
 
 const mockCategorias = [
   { id: 1, nome: "Eletrônicos", descricao: "Produtos eletrônicos em geral" },
@@ -14,6 +15,7 @@ const mockCategorias = [
 
 export function Categorias() {
   const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoriaEmEdicao, setCategoriaEmEdicao] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -26,7 +28,7 @@ export function Categorias() {
 
   const fetchCategorias = async () => {
           try {
-              // setLoading(true);
+              setLoading(true);
               const token = localStorage.getItem("authToken");
               const response = await fetch(`${API_BASE_URL}/categoria-produto`, {
                   headers: {
@@ -44,7 +46,7 @@ export function Categorias() {
               console.error('Erro ao buscar categorias:', error);
               toast.error("Erro ao carregar categorias");
           } finally {
-              // setLoading(false);
+              setLoading(false);
           }
       };
 
@@ -81,7 +83,9 @@ export function Categorias() {
 
   return (
     <div className={estoqueStyles.tabContent}>
-      {categorias.length === 0 ? (
+      {loading ? (
+        <Loading message="Carregando categorias..." />
+      ) : categorias.length === 0 ? (
         <div className={estoqueStyles.emptyState}>
           <div className={estoqueStyles.emptyIcon}>
             <FolderX size={48} />

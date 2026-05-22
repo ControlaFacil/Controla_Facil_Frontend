@@ -4,6 +4,7 @@ import { Edit, Save, XCircle, User, Briefcase, Mail, Phone, CreditCard, Loader2,
 import { API_BASE_URL } from '../api';
 import styles from "./style/MeusDados.module.css";
 import 'react-toastify/dist/ReactToastify.css';
+import { Loading } from './Loading';
 
 const maskCpfCnpj = (v) => {
     const c = String(v).replace(/\D/g, "");
@@ -111,10 +112,7 @@ export function MeusDados() {
     };
 
     if (isLoading) return (
-        <div className={styles.loadingState}>
-            <Loader2 className={styles.spinner} />
-            <p>Carregando perfil...</p>
-        </div>
+        <Loading message="Carregando perfil..." />
     );
 
     return (
