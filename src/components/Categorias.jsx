@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FolderX, Plus, Edit2, Trash2 } from 'lucide-react';
 import { ModalCategoria } from './ModalCategoria';
 import { ModalConfirmacao } from './ModalConfirmacao';
 import styles from './style/Categorias.module.css';
-import estoqueStyles from './style/Estoque.module.css'; // For common layout/buttons
+import estoqueStyles from './style/Estoque.module.css';
+import { API_BASE_URL } from '../api';
+import { toast } from 'react-toastify';
 
 const mockCategorias = [
   { id: 1, nome: "Eletrônicos", descricao: "Produtos eletrônicos em geral" },
@@ -11,12 +13,40 @@ const mockCategorias = [
 ];
 
 export function Categorias() {
-  const [categorias, setCategorias] = useState(mockCategorias);
+  const [categorias, setCategorias] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categoriaEmEdicao, setCategoriaEmEdicao] = useState(null);
-  
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoriaParaExcluir, setCategoriaParaExcluir] = useState(null);
+
+
+  useEffect(() => {
+    fetchCategorias();
+  }, []);
+
+  const fetchCategorias = async () => {
+          try {
+              // setLoading(true);
+              const token = localStorage.getItem("authToken");
+              const response = await fetch(`${API_BASE_URL}/categoria-produto`, {
+                  headers: {
+                      'Authorization': `Bearer ${token}`
+                  }
+              });
+              const data = await response.json();
+              
+              if (data.sucesso) {
+                  setCategorias(data.categorias);
+              } else {
+                  setCategorias([]);
+              }
+          } catch (error) {
+              console.error('Erro ao buscar categorias:', error);
+              toast.error("Erro ao carregar categorias");
+          } finally {
+              // setLoading(false);
+          }
+      };
 
   const handleOpenModal = (categoria = null) => {
     setCategoriaEmEdicao(categoria);
