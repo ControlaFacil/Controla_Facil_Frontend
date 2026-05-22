@@ -62,10 +62,14 @@ export function Categorias() {
 
   const handleSaveCategoria = (formData) => {
     if (categoriaEmEdicao) {
-      setCategorias(categorias.map(cat => cat.id === categoriaEmEdicao.id ? { ...cat, ...formData } : cat));
+      const dadosEdicao = {
+        id: categoriaEmEdicao.id,
+        nome: formData.nome,
+        descricao: formData.descricao
+      }
+      editarCategoria(dadosEdicao)
     } else {
-      const newCat = { ...formData, id: Date.now() };
-      setCategorias([...categorias, newCat]);
+      adicionarCategoria(formData);
     }
     handleCloseModal();
   };
@@ -75,11 +79,85 @@ export function Categorias() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDelete = () => {
-    setCategorias(categorias.filter(cat => cat.id !== categoriaParaExcluir.id));
-    setIsDeleteModalOpen(false);
-    setCategoriaParaExcluir(null);
+  const handleDelete = async (id) => {
+    deletarCategoria(categoriaParaExcluir.id).then(() => {
+      setIsDeleteModalOpen(false);
+      setCategoriaParaExcluir(null);
+    });
   };
+
+  const adicionarCategoria = async (dados) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/categoria-produto`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(dados)
+      });
+      const data = await response.json();
+      
+      if (data.sucesso) {
+        setCategorias([...categorias, data.categoria]);
+        toast.success("Categoria adicionada com sucesso!");
+      } else {
+        toast.error(data.message || "Erro ao adicionar categoria");
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error("Erro ao adicionar categoria");
+    }
+  }
+
+  const deletarCategoria = async (idCategoria) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/categoria-produto/${idCategoria}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      
+      if (data.sucesso) {
+        setCategorias(categorias.filter(cat => cat.id != idCategoria));
+        toast.success("Categoria excluída com sucesso!");
+      } else {
+        toast.error(data.message || "Erro ao excluir categoria");
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error("Erro ao excluir categoria");
+    }
+  }
+
+  const editarCategoria = async (dados) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/categoria-produto`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(dados)
+      });
+      const data = await response.json();
+      
+      if (data.sucesso) {
+        setCategorias(categorias.map(cat => cat.id === data.categoria.id ? data.categoria : cat));
+        toast.success("Categoria editada com sucesso!");
+      } else {
+        toast.error(data.message || "Erro ao editar categoria");
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      toast.error("Erro ao editar categoria");
+    }
+  }
 
   return (
     <div className={estoqueStyles.tabContent}>
