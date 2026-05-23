@@ -18,6 +18,8 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import styles from './style/ModalProdutos.module.css';
+import { API_BASE_URL } from '../api';
+import { toast } from 'react-toastify';
 
 // --- DND Sortable Item Component ---
 function SortableImage({ image, onDelete, onHighlight }) {
@@ -81,8 +83,11 @@ function SortableImage({ image, onDelete, onHighlight }) {
 
 export function ModalProdutos({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState(1);
+  const [categoriasInternas, setCategoriasInternas] = useState([]);
+  const [categoriasML, setCategoriasML] = useState([]);
 
-  // --- Aba 1: Dados do Produto ---
+
+  //#region Aba 1 - Dados do produto
   const [formData, setFormData] = useState({
     titulo: '',
     sku: '',
@@ -96,79 +101,41 @@ export function ModalProdutos({ isOpen, onClose }) {
     estoqueMinimo: '',
   });
 
-  // --- Aba 2: Características ---
+  const retornarCategoriasInternas = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/categoria-produto`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+
+      if(!data.sucesso){
+        setCategoriasInternas([]);
+        throw new Error(data.message || "Erro ao retornar categorias internas");
+      }
+
+      setCategoriasInternas(data.categorias);
+    } catch (error) {
+      console.error("Falha ao retornar categorias internas: " + error);
+      toast.error(error.message);
+    }
+  }
+  //#endregion
+
+  //#region Aba 2 - Caracteristicas
   const [characteristics, setCharacteristics] = useState({
     marca: '',
     modelo: '',
     cor: '',
     material: '',
   });
+  //#endregion
 
-  // --- Aba 3: Imagens ---
+  //#region Aba 3 - Imagens
   const [images, setImages] = useState([]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(1);
-      setFormData({
-        titulo: '',
-        sku: '',
-        categoria: '',
-        categoriaML: '',
-        preco: '',
-        gtin: '',
-        condicao: 'new',
-        descricao: '',
-        estoqueAtual: '',
-        estoqueMinimo: '',
-      });
-      setCharacteristics({
-        marca: '',
-        modelo: '',
-        cor: '',
-        material: '',
-      });
-      setImages([]);
-    }
-  }, [isOpen]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-        activationConstraint: {
-            distance: 5,
-        },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  if (!isOpen) return null;
-
-  // Handlers para o Form
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    
-    if (name === 'preco') {
-        // Mascara monetária simples (permite apenas numeros e virgula)
-        let val = value.replace(/\D/g, '');
-        val = (val / 100).toFixed(2) + '';
-        val = val.replace(".", ",");
-        val = val.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-        val = val.replace(/(\d)(\d{3}),/g, "$1.$2,");
-        setFormData({ ...formData, [name]: val });
-        return;
-    }
-
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleCharChange = (e) => {
-    const { name, value } = e.target;
-    setCharacteristics({ ...characteristics, [name]: value });
-  };
-
-  // Handlers para Imagens
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -218,8 +185,69 @@ export function ModalProdutos({ isOpen, onClose }) {
       });
     }
   };
+  //#endregion
 
-  // Finalização (Salvar Produto)
+  useEffect(() => {
+    if (isOpen) {
+      retornarCategoriasInternas();
+      setActiveTab(1);
+      setFormData({
+        titulo: '',
+        sku: '',
+        categoria: '',
+        categoriaML: '',
+        preco: '',
+        gtin: '',
+        condicao: 'new',
+        descricao: '',
+        estoqueAtual: '',
+        estoqueMinimo: '',
+      });
+      setCharacteristics({
+        marca: '',
+        modelo: '',
+        cor: '',
+        material: '',
+      });
+      setImages([]);
+    }
+  }, [isOpen]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+        activationConstraint: {
+            distance: 5,
+        },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  if (!isOpen) return null;
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'preco') {
+        // Mascara monetária simples (permite apenas numeros e virgula)
+        let val = value.replace(/\D/g, '');
+        val = (val / 100).toFixed(2) + '';
+        val = val.replace(".", ",");
+        val = val.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+        val = val.replace(/(\d)(\d{3}),/g, "$1.$2,");
+        setFormData({ ...formData, [name]: val });
+        return;
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleCharChange = (e) => {
+    const { name, value } = e.target;
+    setCharacteristics({ ...characteristics, [name]: value });
+  };
+
   const handleSave = () => {
     // Montando JSON final mockado
     const mlAttributes = [
@@ -291,16 +319,9 @@ export function ModalProdutos({ isOpen, onClose }) {
                 <label>Categoria Interna</label>
                 <select name="categoria" value={formData.categoria} onChange={handleFormChange}>
                   <option value="">Selecione uma categoria interna...</option>
-                  <option value="eletronicos">Eletrônicos</option>
-                  <option value="informatica">Informática</option>
-                  <option value="casa_decoracao">Casa e Decoração</option>
-                  <option value="moda">Moda</option>
-                  <option value="esportes">Esportes</option>
-                  <option value="beleza">Beleza e Cuidado Pessoal</option>
-                  <option value="ferramentas">Ferramentas</option>
-                  <option value="brinquedos">Brinquedos</option>
-                  <option value="automotivo">Automotivo</option>
-                  <option value="saude">Saúde</option>
+                  {categoriasInternas.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.nome}</option>
+                  ))}
                 </select>
               </div>
               <div className={styles.inputGroup}>
