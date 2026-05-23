@@ -1,23 +1,23 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { HeaderU } from "./components/HeaderU";
-import { HomeU } from "./components/HomeU";
-import { LoginU } from "./components/LoginU";
-import { Cadastro } from "./components/Cadastro";
-import { MeusDados } from "./components/MeusDados";
-import { CadastroParceiro } from "./components/CadastroParceiro";
-import { CadastroProduto } from "./components/CadastroProduto";
-import { Estoque } from "./components/Estoque";
-import { EmailConfirmation } from "./components/EmailConfirmation";
-import { EmailValidado } from "./components/EmailValidado"
-import { EmailValidationFailed } from "./components/EmailValidationFailed";
-import { DashboardEstoque } from "./components/DashBoardEstoque";
-import { MarketplaceIntegrations } from "./components/MarketplaceIntegrations";
-import { MarketplaceAuthSuccess } from "./components/MarketplaceAuthSuccess";
-import { MarketplaceAuthError } from "./components/MarketplaceAuthError";
-import { MarketplaceCallback } from "./components/MarketplaceCallback";
-import { Pedidos } from "./components/Pedidos";
-import { Relatorios } from "./components/Relatorios";
+import { HomeU } from "./pages/HomeU";
+import { LoginU } from "./pages/LoginU";
+import { Cadastro } from "./pages/Cadastro";
+import { MeusDados } from "./pages/MeusDados";
+import { CadastroParceiro } from "./pages/CadastroParceiro";
+import { CadastroProduto } from "./pages/CadastroProduto";
+import { Estoque } from "./pages/Estoque";
+import { EmailConfirmation } from "./pages/EmailConfirmation";
+import { EmailValidado } from "./pages/EmailValidado"
+import { EmailValidationFailed } from "./pages/EmailValidationFailed";
+import { DashboardEstoque } from "./pages/DashBoardEstoque";
+import { MarketplaceIntegrations } from "./pages/MarketplaceIntegrations";
+import { MarketplaceAuthSuccess } from "./pages/MarketplaceAuthSuccess";
+import { MarketplaceAuthError } from "./pages/MarketplaceAuthError";
+import { MarketplaceCallback } from "./pages/MarketplaceCallback";
+import { Pedidos } from "./pages/Pedidos";
+import { Relatorios } from "./pages/Relatorios";
 import './global.css';
 
 function LayoutWithHeader() {
