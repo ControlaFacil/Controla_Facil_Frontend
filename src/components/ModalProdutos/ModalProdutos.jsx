@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Trash2, Star, GripVertical } from 'lucide-react';
+import { X, UploadCloud, Trash2, Star, GripVertical, Info } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -84,11 +84,13 @@ function SortableImage({ image, onDelete, onHighlight }) {
 export function ModalProdutos({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState(1);
   const [categoriasInternas, setCategoriasInternas] = useState([]);
-  const [categoriasML, setCategoriasML] = useState([]);
+  const [integracoes, setIntegracoes] = useState([]);
+  const [sugestoesCategoria, setSugestoesCategoria] = useState([]);
 
 
   //#region Aba 1 - Dados do produto
   const [formData, setFormData] = useState({
+    integracaoId: '',
     titulo: '',
     sku: '',
     categoria: '',
@@ -122,6 +124,63 @@ export function ModalProdutos({ isOpen, onClose }) {
       toast.error(error.message);
     }
   }
+
+  const retornarIntegracoes = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/integracoes`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+
+      if(!data.sucesso){
+        setIntegracoes([]);
+        throw new Error(data.message || "Erro ao retornar integrações");
+      }
+
+      setIntegracoes(data.integracoes);
+    } catch (error) {
+      console.error("Falha ao retornar integrações: " + error);
+      toast.error(error.message);
+    }
+  };
+
+  const buscarSugestoesCategoria = async (integracaoId, titulo) => {
+    if (!integracaoId || !titulo) return;
+    
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/categoria-produto/mercado-livre/sugeridas`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          integracaoId: Number(integracaoId),
+          titulo: titulo
+        })
+      });
+      
+      const data = await response.json();
+      if(data.sucesso) {
+        setSugestoesCategoria(data.sugestoes);
+        if (data.sugestoes.length > 0) {
+            setFormData(prev => ({ ...prev, categoriaML: data.sugestoes[0].category_id }));
+        } else {
+            setFormData(prev => ({ ...prev, categoriaML: '' }));
+        }
+      } else {
+        setSugestoesCategoria([]);
+        toast.error(data.message || "Erro ao buscar sugestões de categoria");
+      }
+    } catch (error) {
+      console.error("Falha ao buscar sugestões: ", error);
+      toast.error("Falha ao buscar sugestões de categoria.");
+    }
+  };
   //#endregion
 
   //#region Aba 2 - Caracteristicas
@@ -189,9 +248,11 @@ export function ModalProdutos({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
+      retornarIntegracoes();
       retornarCategoriasInternas();
       setActiveTab(1);
       setFormData({
+        integracaoId: '',
         titulo: '',
         sku: '',
         categoria: '',
@@ -203,6 +264,7 @@ export function ModalProdutos({ isOpen, onClose }) {
         estoqueAtual: '',
         estoqueMinimo: '',
       });
+      setSugestoesCategoria([]);
       setCharacteristics({
         marca: '',
         modelo: '',
@@ -241,6 +303,10 @@ export function ModalProdutos({ isOpen, onClose }) {
     }
 
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'integracaoId' && formData.titulo) {
+      buscarSugestoesCategoria(value, formData.titulo);
+    }
   };
 
   const handleCharChange = (e) => {
@@ -308,8 +374,24 @@ export function ModalProdutos({ isOpen, onClose }) {
           {activeTab === 1 && (
             <div className={styles.formGrid}>
               <div className={styles.inputGroup}>
+                <label>Integração</label>
+                <select name="integracaoId" value={formData.integracaoId} onChange={handleFormChange}>
+                  <option value="">Selecione uma integração...</option>
+                  {integracoes.map((int) => (
+                    <option key={int.id} value={int.id}>{int.nome}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.inputGroup}>
                 <label>Título do Anúncio</label>
-                <input type="text" name="titulo" value={formData.titulo} onChange={handleFormChange} placeholder="Ex: Teclado Mecânico Gamer" />
+                <input 
+                  type="text" 
+                  name="titulo" 
+                  value={formData.titulo} 
+                  onChange={handleFormChange} 
+                  onBlur={() => buscarSugestoesCategoria(formData.integracaoId, formData.titulo)}
+                  placeholder="Ex: Teclado Mecânico Gamer" 
+                />
               </div>
               <div className={styles.inputGroup}>
                 <label>SKU</label>
@@ -361,33 +443,40 @@ export function ModalProdutos({ isOpen, onClose }) {
                 Preencha os atributos abaixo para melhorar o ranqueamento do seu anúncio no Mercado Livre. Campos gerados dinamicamente com base na categoria.
               </p>
               <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
-                <label>Categoria Mercado Livre</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  Categoria Mercado Livre
+                  <Info size={16} title="Esta é a categoria à qual o produto será vinculado ao ser anunciado no Mercado Livre. Seu conteúdo é sugerido com base no Título digitado para o produto." style={{cursor: 'help'}} />
+                </label>
                 <select name="categoriaML" value={formData.categoriaML} onChange={handleFormChange}>
                   <option value="">Selecione a categoria do Mercado Livre...</option>
-                  <option value="MLB1051">Celulares e Telefones</option>
-                  <option value="MLB1648">Informática -Componentes</option>
-                  <option value="MLB1430">Roupas e Calçados</option>
-                  <option value="MLB271599">Eletrônicos, Áudio e Vídeo</option>
-                  <option value="MLB5726">Eletrodomésticos</option>
-                  <option value="MLB1574">Casa, Móveis e Decoração</option>
+                  {sugestoesCategoria.map((cat) => (
+                    <option key={cat.category_id} value={cat.category_id}>
+                      {cat.category_name} ({cat.domain_name})
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className={styles.inputGroup}>
-                <label>Marca</label>
-                <input type="text" name="marca" value={characteristics.marca} onChange={handleCharChange} placeholder="Ex: Redragon" />
-              </div>
-              <div className={styles.inputGroup}>
-                <label>Modelo</label>
-                <input type="text" name="modelo" value={characteristics.modelo} onChange={handleCharChange} placeholder="Ex: Mitra K551" />
-              </div>
-              <div className={styles.inputGroup}>
-                <label>Cor</label>
-                <input type="text" name="cor" value={characteristics.cor} onChange={handleCharChange} placeholder="Ex: Preto" />
-              </div>
-              <div className={styles.inputGroup}>
-                <label>Material</label>
-                <input type="text" name="material" value={characteristics.material} onChange={handleCharChange} placeholder="Ex: Plástico ABS e Metal" />
-              </div>
+              
+              {formData.categoriaML && (
+                <>
+                  <div className={styles.inputGroup}>
+                    <label>Marca</label>
+                    <input type="text" name="marca" value={characteristics.marca} onChange={handleCharChange} placeholder="Ex: Redragon" />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" value={characteristics.modelo} onChange={handleCharChange} placeholder="Ex: Mitra K551" />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Cor</label>
+                    <input type="text" name="cor" value={characteristics.cor} onChange={handleCharChange} placeholder="Ex: Preto" />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label>Material</label>
+                    <input type="text" name="material" value={characteristics.material} onChange={handleCharChange} placeholder="Ex: Plástico ABS e Metal" />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
