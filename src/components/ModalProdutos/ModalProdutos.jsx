@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Trash2, Star, GripVertical, Info } from 'lucide-react';
+import { X, UploadCloud, Trash2, Star, GripVertical, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -87,6 +87,242 @@ export function ModalProdutos({ isOpen, onClose }) {
   const [integracoes, setIntegracoes] = useState([]);
   const [sugestoesCategoria, setSugestoesCategoria] = useState([]);
 
+  const [mlAttributes, setMlAttributes] = useState([]);
+  const [mlAttributeValues, setMlAttributeValues] = useState({});
+  const [loadingAttributes, setLoadingAttributes] = useState(false);
+  const [showOnlyRequired, setShowOnlyRequired] = useState(true);
+  const [openGroups, setOpenGroups] = useState({});
+
+  const carregarAtributosCategoria = async (integracaoId, categoryId) => {
+    debugger;
+    if (!integracaoId || !categoryId) return;
+    
+    setLoadingAttributes(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/categoria-produto/mercado-livre/categoria/atributos`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          integracaoId: Number(integracaoId),
+          ml_categoriaId: categoryId
+        })
+      });
+      
+      const data = await response.json();
+      if (data.sucesso || data.dados.attributes) {
+        const attrs = data.dados.attributes || [];
+        setMlAttributes(attrs);
+        
+        // Initialize values
+        const initialValues = {};
+        attrs.forEach(attr => {
+          if (attr.fieldType === 'number_unit') {
+            initialValues[attr.id] = {
+              value: '',
+              unit: attr.defaultUnit || (attr.allowedUnits && attr.allowedUnits[0]) || ''
+            };
+          } else {
+            initialValues[attr.id] = '';
+          }
+        });
+        setMlAttributeValues(initialValues);
+        
+        // Initialize accordion state - open all groups by default
+        const initialOpen = {};
+        attrs.forEach(attr => {
+          initialOpen[attr.groupId || 'OTHERS'] = true;
+        });
+        setOpenGroups(initialOpen);
+      } else {
+        setMlAttributes([]);
+        setMlAttributeValues({});
+        toast.error(data.message || "Erro ao carregar atributos do Mercado Livre");
+      }
+    } catch (error) {
+      console.error("Falha ao carregar atributos: ", error);
+      toast.error("Falha ao carregar atributos da categoria Mercado Livre.");
+    } finally {
+      setLoadingAttributes(false);
+    }
+  };
+
+  const toggleGroup = (groupId) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [groupId]: !prev[groupId]
+    }));
+  };
+
+  const getGroupedAttributes = () => {
+    const grouped = {};
+    
+    mlAttributes.forEach(attr => {
+      let isRequired = attr.required;
+      
+      // Rule 4.A.1: GTIN and EMPTY_GTIN_REASON
+      if (attr.id === 'EMPTY_GTIN_REASON') {
+        const isGtinEmpty = !formData.gtin || formData.gtin.trim() === '';
+        if (isGtinEmpty) {
+          isRequired = true;
+        } else {
+          return;
+        }
+      }
+      
+      // Rule 4.A.2: Condition and GRADING
+      if (attr.id === 'GRADING') {
+        if (formData.condicao !== 'refurbished') {
+          return;
+        }
+      }
+      
+      if (showOnlyRequired && !isRequired) {
+        return;
+      }
+      
+      const gId = attr.groupId || 'OTHERS';
+      const gLabel = attr.groupLabel || 'Outros';
+      
+      if (!grouped[gId]) {
+        grouped[gId] = {
+          label: gLabel,
+          items: []
+        };
+      }
+      grouped[gId].items.push({ ...attr, isRequired });
+    });
+    
+    // Sort items by relevance
+    Object.keys(grouped).forEach(gId => {
+      grouped[gId].items.sort((a, b) => {
+        const relA = a.relevance !== undefined ? a.relevance : 9999;
+        const relB = b.relevance !== undefined ? b.relevance : 9999;
+        return relA - relB;
+      });
+    });
+    
+    return grouped;
+  };
+
+  const handleAttrChange = (attrId, val) => {
+    setMlAttributeValues(prev => ({
+      ...prev,
+      [attrId]: val
+    }));
+  };
+
+  const handleNumUnitChange = (attrId, field, val) => {
+    setMlAttributeValues(prev => ({
+      ...prev,
+      [attrId]: {
+        ...prev[attrId],
+        [field]: val
+      }
+    }));
+  };
+
+  const renderAttributeField = (attr) => {
+    const value = mlAttributeValues[attr.id];
+    
+    const renderInput = () => {
+      switch (attr.fieldType) {
+        case 'text':
+          return (
+            <input 
+              type="text"
+              value={value || ''}
+              onChange={(e) => handleAttrChange(attr.id, e.target.value)}
+              placeholder={attr.placeholder || `Digite ${attr.label}...`}
+            />
+          );
+        case 'number':
+          return (
+            <input 
+              type="number"
+              value={value || ''}
+              onChange={(e) => handleAttrChange(attr.id, e.target.value)}
+              placeholder={attr.placeholder || `Digite ${attr.label}...`}
+            />
+          );
+        case 'boolean':
+        case 'select':
+          return (
+            <select 
+              value={value || ''}
+              onChange={(e) => handleAttrChange(attr.id, e.target.value)}
+            >
+              <option value="">Selecione...</option>
+              {attr.options && attr.options.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          );
+        case 'number_unit':
+          const numVal = value ? value.value : '';
+          const unitVal = value ? value.unit : (attr.defaultUnit || '');
+          return (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input 
+                type="number"
+                value={numVal || ''}
+                onChange={(e) => handleNumUnitChange(attr.id, 'value', e.target.value)}
+                placeholder="Valor"
+                style={{ flex: 2 }}
+              />
+              <select 
+                value={unitVal || ''}
+                onChange={(e) => handleNumUnitChange(attr.id, 'unit', e.target.value)}
+                style={{ flex: 1 }}
+              >
+                {attr.allowedUnits && attr.allowedUnits.map(unit => (
+                  <option key={unit} value={unit}>
+                    {unit}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        case 'file':
+          return (
+            <input 
+              type="file"
+              onChange={(e) => handleAttrChange(attr.id, e.target.files[0])}
+            />
+          );
+        default:
+          return (
+            <input 
+              type="text"
+              value={value || ''}
+              onChange={(e) => handleAttrChange(attr.id, e.target.value)}
+              placeholder={attr.placeholder || `Digite ${attr.label}...`}
+            />
+          );
+      }
+    };
+
+    return (
+      <div key={attr.id} className={styles.inputGroup}>
+        <label>
+          {attr.label}
+          {attr.isRequired && <span className={styles.requiredAsterisk}> *</span>}
+          {attr.placeholder && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', cursor: 'help', color: '#94a3b8' }} title={attr.placeholder}>
+              <Info size={14} style={{ marginLeft: '4px' }} />
+            </span>
+          )}
+        </label>
+        {renderInput()}
+      </div>
+    );
+  };
+
 
   //#region Aba 1 - Dados do produto
   const [formData, setFormData] = useState({
@@ -168,9 +404,13 @@ export function ModalProdutos({ isOpen, onClose }) {
       if(data.sucesso) {
         setSugestoesCategoria(data.sugestoes);
         if (data.sugestoes.length > 0) {
-            setFormData(prev => ({ ...prev, categoriaML: data.sugestoes[0].category_id }));
+            const suggestedCat = data.sugestoes[0].category_id;
+            setFormData(prev => ({ ...prev, categoriaML: suggestedCat }));
+            carregarAtributosCategoria(integracaoId, suggestedCat);
         } else {
             setFormData(prev => ({ ...prev, categoriaML: '' }));
+            setMlAttributes([]);
+            setMlAttributeValues({});
         }
       } else {
         setSugestoesCategoria([]);
@@ -272,6 +512,10 @@ export function ModalProdutos({ isOpen, onClose }) {
         material: '',
       });
       setImages([]);
+      setMlAttributes([]);
+      setMlAttributeValues({});
+      setShowOnlyRequired(true);
+      setOpenGroups({});
     }
   }, [isOpen]);
 
@@ -307,6 +551,15 @@ export function ModalProdutos({ isOpen, onClose }) {
     if (name === 'integracaoId' && formData.titulo) {
       buscarSugestoesCategoria(value, formData.titulo);
     }
+
+    if (name === 'categoriaML') {
+      if (value) {
+        carregarAtributosCategoria(formData.integracaoId, value);
+      } else {
+        setMlAttributes([]);
+        setMlAttributeValues({});
+      }
+    }
   };
 
   const handleCharChange = (e) => {
@@ -315,18 +568,51 @@ export function ModalProdutos({ isOpen, onClose }) {
   };
 
   const handleSave = () => {
-    // Montando JSON final mockado
-    const mlAttributes = [
-        { id: "BRAND", value_name: characteristics.marca },
-        { id: "MODEL", value_name: characteristics.modelo },
-        { id: "COLOR", value_name: characteristics.cor },
-        { id: "MATERIAL", value_name: characteristics.material },
-    ].filter(attr => attr.value_name.trim() !== '');
+    // Compile dynamic attributes
+    const formattedAttributes = [];
+    Object.entries(mlAttributeValues).forEach(([id, val]) => {
+      if (val === undefined || val === null || val === '') return;
+      const attr = mlAttributes.find(a => a.id === id);
+      if (!attr) return;
+
+      if (attr.fieldType === 'number_unit') {
+        if (val.value !== undefined && val.value !== null && val.value !== '') {
+          formattedAttributes.push({
+            id: id,
+            value_number: Number(val.value),
+            value_unit_id: val.unit || attr.defaultUnit || (attr.allowedUnits && attr.allowedUnits[0])
+          });
+        }
+      } else if (attr.fieldType === 'boolean' || attr.fieldType === 'select') {
+        const optionExists = attr.options?.some(opt => opt.value === val);
+        if (optionExists) {
+          formattedAttributes.push({
+            id: id,
+            value_id: val
+          });
+        } else {
+          formattedAttributes.push({
+            id: id,
+            value_name: String(val)
+          });
+        }
+      } else if (attr.fieldType === 'number') {
+        formattedAttributes.push({
+          id: id,
+          value_name: String(val)
+        });
+      } else {
+        formattedAttributes.push({
+          id: id,
+          value_name: String(val)
+        });
+      }
+    });
 
     const payload = {
         ...formData,
         preco: parseFloat(formData.preco.replace(/\./g, '').replace(',', '.')), // Converte para float
-        attributes: mlAttributes,
+        attributes: formattedAttributes,
         images: images.map((img, index) => ({
              id: img.id,
              isHighlight: img.isHighlight,
@@ -411,6 +697,7 @@ export function ModalProdutos({ isOpen, onClose }) {
                 <select name="condicao" value={formData.condicao} onChange={handleFormChange}>
                   <option value="new">Novo</option>
                   <option value="used">Usado</option>
+                  <option value="refurbished">Recondicionado</option>
                   <option value="not_specified">Não Especificado</option>
                 </select>
               </div>
@@ -459,22 +746,66 @@ export function ModalProdutos({ isOpen, onClose }) {
               
               {formData.categoriaML && (
                 <>
-                  <div className={styles.inputGroup}>
-                    <label>Marca</label>
-                    <input type="text" name="marca" value={characteristics.marca} onChange={handleCharChange} placeholder="Ex: Redragon" />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Modelo</label>
-                    <input type="text" name="modelo" value={characteristics.modelo} onChange={handleCharChange} placeholder="Ex: Mitra K551" />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Cor</label>
-                    <input type="text" name="cor" value={characteristics.cor} onChange={handleCharChange} placeholder="Ex: Preto" />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label>Material</label>
-                    <input type="text" name="material" value={characteristics.material} onChange={handleCharChange} placeholder="Ex: Plástico ABS e Metal" />
-                  </div>
+                  {loadingAttributes ? (
+                    <div className={styles.loadingContainer} style={{ gridColumn: 'span 2' }}>
+                      <div className={styles.spinner}></div>
+                      <p>Carregando atributos da categoria...</p>
+                    </div>
+                  ) : mlAttributes.length > 0 ? (
+                    <>
+                      {/* Switch de Filtro de Atributos */}
+                      <div className={styles.filterSwitchContainer}>
+                        <span>Exibir apenas campos obrigatórios</span>
+                        <label className={styles.switch}>
+                          <input 
+                            type="checkbox" 
+                            checked={showOnlyRequired} 
+                            onChange={(e) => setShowOnlyRequired(e.target.checked)} 
+                          />
+                          <span className={styles.slider}></span>
+                        </label>
+                      </div>
+
+                      {/* Accordions Agrupados */}
+                      {(() => {
+                        const grouped = getGroupedAttributes();
+                        const groupKeys = Object.keys(grouped);
+                        
+                        if (groupKeys.length === 0) {
+                          return (
+                            <p className={styles.fullWidth} style={{ color: '#64748b', textAlign: 'center', margin: '20px 0' }}>
+                              Nenhum atributo {showOnlyRequired ? 'obrigatório' : ''} encontrado para esta categoria.
+                            </p>
+                          );
+                        }
+
+                        return groupKeys.map(groupId => {
+                          const group = grouped[groupId];
+                          const isOpen = !!openGroups[groupId];
+                          
+                          return (
+                            <div key={groupId} className={styles.accordion}>
+                              <div className={styles.accordionHeader} onClick={() => toggleGroup(groupId)}>
+                                <span>{group.label} ({group.items.length})</span>
+                                <span className={styles.accordionIcon}>
+                                  {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                </span>
+                              </div>
+                              {isOpen && (
+                                <div className={styles.accordionContent}>
+                                  {group.items.map(attr => renderAttributeField(attr))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </>
+                  ) : (
+                    <p className={styles.fullWidth} style={{ color: '#64748b', textAlign: 'center', margin: '20px 0' }}>
+                      Nenhum atributo encontrado para esta categoria.
+                    </p>
+                  )}
                 </>
               )}
             </div>
