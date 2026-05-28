@@ -93,6 +93,9 @@ export function ModalProdutos({ isOpen, onClose }) {
   const [showOnlyRequired, setShowOnlyRequired] = useState(true);
   const [openGroups, setOpenGroups] = useState({});
 
+  const [errors, setErrors] = useState({});
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
   const carregarAtributosCategoria = async (integracaoId, categoryId) => {
     debugger;
     if (!integracaoId || !categoryId) return;
@@ -213,6 +216,9 @@ export function ModalProdutos({ isOpen, onClose }) {
       ...prev,
       [attrId]: val
     }));
+    if (errors[`ml_attr_${attrId}`]) {
+      setErrors(prev => ({ ...prev, [`ml_attr_${attrId}`]: false }));
+    }
   };
 
   const handleNumUnitChange = (attrId, field, val) => {
@@ -223,10 +229,14 @@ export function ModalProdutos({ isOpen, onClose }) {
         [field]: val
       }
     }));
+    if (errors[`ml_attr_${attrId}`]) {
+      setErrors(prev => ({ ...prev, [`ml_attr_${attrId}`]: false }));
+    }
   };
 
   const renderAttributeField = (attr) => {
     const value = mlAttributeValues[attr.id];
+    const hasError = errors[`ml_attr_${attr.id}`];
     
     const renderInput = () => {
       switch (attr.fieldType) {
@@ -234,6 +244,7 @@ export function ModalProdutos({ isOpen, onClose }) {
           return (
             <input 
               type="text"
+              className={hasError ? styles.errorBorder : ''}
               value={value || ''}
               onChange={(e) => handleAttrChange(attr.id, e.target.value)}
               placeholder={attr.placeholder || `Digite ${attr.label}...`}
@@ -243,6 +254,7 @@ export function ModalProdutos({ isOpen, onClose }) {
           return (
             <input 
               type="number"
+              className={hasError ? styles.errorBorder : ''}
               value={value || ''}
               onChange={(e) => handleAttrChange(attr.id, e.target.value)}
               placeholder={attr.placeholder || `Digite ${attr.label}...`}
@@ -253,6 +265,7 @@ export function ModalProdutos({ isOpen, onClose }) {
           return (
             <select 
               value={value || ''}
+              className={hasError ? styles.errorBorder : ''}
               onChange={(e) => handleAttrChange(attr.id, e.target.value)}
             >
               <option value="">Selecione...</option>
@@ -267,18 +280,19 @@ export function ModalProdutos({ isOpen, onClose }) {
           const numVal = value ? value.value : '';
           const unitVal = value ? value.unit : (attr.defaultUnit || '');
           return (
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
               <input 
                 type="number"
+                className={hasError ? styles.errorBorder : ''}
                 value={numVal || ''}
                 onChange={(e) => handleNumUnitChange(attr.id, 'value', e.target.value)}
                 placeholder="Valor"
-                style={{ flex: 2 }}
+                style={{ flex: 2, minWidth: 0 }}
               />
               <select 
                 value={unitVal || ''}
                 onChange={(e) => handleNumUnitChange(attr.id, 'unit', e.target.value)}
-                style={{ flex: 1 }}
+                style={{ flex: 1, minWidth: 0 }}
               >
                 {attr.allowedUnits && attr.allowedUnits.map(unit => (
                   <option key={unit} value={unit}>
@@ -292,6 +306,7 @@ export function ModalProdutos({ isOpen, onClose }) {
           return (
             <input 
               type="file"
+              className={hasError ? styles.errorBorder : ''}
               onChange={(e) => handleAttrChange(attr.id, e.target.files[0])}
             />
           );
@@ -299,6 +314,7 @@ export function ModalProdutos({ isOpen, onClose }) {
           return (
             <input 
               type="text"
+              className={hasError ? styles.errorBorder : ''}
               value={value || ''}
               onChange={(e) => handleAttrChange(attr.id, e.target.value)}
               placeholder={attr.placeholder || `Digite ${attr.label}...`}
@@ -516,6 +532,8 @@ export function ModalProdutos({ isOpen, onClose }) {
       setMlAttributeValues({});
       setShowOnlyRequired(true);
       setOpenGroups({});
+      setErrors({});
+      setShowWarningModal(false);
     }
   }, [isOpen]);
 
@@ -535,6 +553,10 @@ export function ModalProdutos({ isOpen, onClose }) {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: false }));
+    }
+
     if (name === 'preco') {
         // Mascara monetária simples (permite apenas numeros e virgula)
         let val = value.replace(/\D/g, '');
@@ -568,6 +590,46 @@ export function ModalProdutos({ isOpen, onClose }) {
   };
 
   const handleSave = () => {
+    let newErrors = {};
+
+    if (!formData.integracaoId) newErrors.integracaoId = true;
+    if (!formData.titulo) newErrors.titulo = true;
+    if (!formData.sku) newErrors.sku = true;
+    if (!formData.preco) newErrors.preco = true;
+    if (!formData.condicao) newErrors.condicao = true;
+    if (!formData.categoria) newErrors.categoria = true;
+
+    mlAttributes.forEach(attr => {
+      let isRequired = attr.required;
+      
+      if (attr.id === 'EMPTY_GTIN_REASON') {
+        const isGtinEmpty = !formData.gtin || formData.gtin.trim() === '';
+        if (isGtinEmpty) isRequired = true;
+      }
+      if (attr.id === 'GRADING') {
+        if (formData.condicao !== 'refurbished') isRequired = false;
+      }
+
+      if (isRequired) {
+        const val = mlAttributeValues[attr.id];
+        if (attr.fieldType === 'number_unit') {
+          if (!val || val.value === undefined || val.value === null || val.value === '') {
+            newErrors[`ml_attr_${attr.id}`] = true;
+          }
+        } else {
+          if (val === undefined || val === null || val === '') {
+            newErrors[`ml_attr_${attr.id}`] = true;
+          }
+        }
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setShowWarningModal(true);
+      return;
+    }
+
     // Compile dynamic attributes
     const formattedAttributes = [];
     Object.entries(mlAttributeValues).forEach(([id, val]) => {
@@ -627,6 +689,20 @@ export function ModalProdutos({ isOpen, onClose }) {
 
   return (
     <div className={styles.modalOverlay}>
+      {showWarningModal && (
+        <div className={styles.warningModalOverlay}>
+          <div className={styles.warningModal}>
+            <div className={styles.warningHeader}>
+              <Info color="#ef4444" size={24} />
+              <h3>Atenção</h3>
+            </div>
+            <p>Por favor, preencha todos os campos obrigatórios antes de salvar o produto.</p>
+            <button onClick={() => setShowWarningModal(false)} className={styles.btnWarningOk}>
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
       <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>
           <h2>Cadastrar Novo Produto</h2>
@@ -661,7 +737,7 @@ export function ModalProdutos({ isOpen, onClose }) {
             <div className={styles.formGrid}>
               <div className={styles.inputGroup}>
                 <label>Integração</label>
-                <select name="integracaoId" value={formData.integracaoId} onChange={handleFormChange}>
+                <select name="integracaoId" value={formData.integracaoId} onChange={handleFormChange} className={errors.integracaoId ? styles.errorBorder : ''}>
                   <option value="">Selecione uma integração...</option>
                   {integracoes.map((int) => (
                     <option key={int.id} value={int.id}>{int.nome}</option>
@@ -673,6 +749,7 @@ export function ModalProdutos({ isOpen, onClose }) {
                 <input 
                   type="text" 
                   name="titulo" 
+                  className={errors.titulo ? styles.errorBorder : ''}
                   value={formData.titulo} 
                   onChange={handleFormChange} 
                   onBlur={() => buscarSugestoesCategoria(formData.integracaoId, formData.titulo)}
@@ -681,11 +758,11 @@ export function ModalProdutos({ isOpen, onClose }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>SKU</label>
-                <input type="text" name="sku" value={formData.sku} onChange={handleFormChange} placeholder="Ex: TEC-GAMER-01" />
+                <input type="text" name="sku" className={errors.sku ? styles.errorBorder : ''} value={formData.sku} onChange={handleFormChange} placeholder="Ex: TEC-GAMER-01" />
               </div>
               <div className={styles.inputGroup}>
                 <label>Categoria Interna</label>
-                <select name="categoria" value={formData.categoria} onChange={handleFormChange}>
+                <select name="categoria" value={formData.categoria} onChange={handleFormChange} className={errors.categoria ? styles.errorBorder : ''}>
                   <option value="">Selecione uma categoria interna...</option>
                   {categoriasInternas.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.nome}</option>
@@ -694,7 +771,7 @@ export function ModalProdutos({ isOpen, onClose }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>Condição</label>
-                <select name="condicao" value={formData.condicao} onChange={handleFormChange}>
+                <select name="condicao" value={formData.condicao} onChange={handleFormChange} className={errors.condicao ? styles.errorBorder : ''}>
                   <option value="new">Novo</option>
                   <option value="used">Usado</option>
                   <option value="refurbished">Recondicionado</option>
@@ -703,7 +780,7 @@ export function ModalProdutos({ isOpen, onClose }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>Preço de Venda (R$)</label>
-                <input type="text" name="preco" value={formData.preco} onChange={handleFormChange} placeholder="0,00" />
+                <input type="text" name="preco" className={errors.preco ? styles.errorBorder : ''} value={formData.preco} onChange={handleFormChange} placeholder="0,00" />
               </div>
               <div className={styles.inputGroup}>
                 <label>GTIN / EAN</label>
@@ -784,7 +861,7 @@ export function ModalProdutos({ isOpen, onClose }) {
                           const isOpen = !!openGroups[groupId];
                           
                           return (
-                            <div key={groupId} className={styles.accordion}>
+                            <div key={groupId} className={`${styles.accordion} ${!isOpen ? styles.closed : ''}`}>
                               <div className={styles.accordionHeader} onClick={() => toggleGroup(groupId)}>
                                 <span>{group.label} ({group.items.length})</span>
                                 <span className={styles.accordionIcon}>
