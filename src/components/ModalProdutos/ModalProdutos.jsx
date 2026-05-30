@@ -591,7 +591,7 @@ export function ModalProdutos({ isOpen, onClose }) {
     setCharacteristics({ ...characteristics, [name]: value });
   };
 
-  const handleSave = async () => {
+  const validateForm = () => {
     let newErrors = {};
 
     if (!formData.integracaoId) newErrors.integracaoId = true;
@@ -626,13 +626,10 @@ export function ModalProdutos({ isOpen, onClose }) {
       }
     });
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setShowWarningModal(true);
-      return;
-    }
+    return newErrors;
+  };
 
-    // Compile dynamic attributes
+  const compileAttributes = () => {
     const formattedAttributes = [];
     Object.entries(mlAttributeValues).forEach(([id, val]) => {
       if (val === undefined || val === null || val === '') return;
@@ -672,6 +669,75 @@ export function ModalProdutos({ isOpen, onClose }) {
         });
       }
     });
+    return formattedAttributes;
+  };
+
+  const uploadImagesInBatch = async (token) => {
+    const uploadedImages = [];
+    for (let index = 0; index < images.length; index++) {
+      const img = images[index];
+      let url = img.url;
+
+      if (!url.startsWith("uploads/")) {
+        const formDataUpload = new FormData();
+        formDataUpload.append("imagem", img.file);
+
+        const uploadResponse = await fetch(`${API_BASE_URL}/produto/upload-imagem`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formDataUpload
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Falha no upload da imagem ${img.file?.name || index + 1}`);
+        }
+
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.sucesso) {
+          throw new Error(uploadData.error || uploadData.mensagem || "Erro no upload da imagem");
+        }
+
+        url = uploadData.caminho;
+      }
+
+      uploadedImages.push({
+        url: url,
+        ordem: index + 1,
+        ehDestaque: img.isHighlight ? 1 : 0
+      });
+    }
+    return uploadedImages;
+  };
+
+  const registerProduct = async (token, payload) => {
+    const response = await fetch(`${API_BASE_URL}/produto`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || !responseData.sucesso) {
+      throw new Error(responseData.error || responseData.mensagem || "Falha ao cadastrar o produto");
+    }
+
+    return responseData;
+  };
+
+  const handleSave = async () => {
+    const newErrors = validateForm();
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setShowWarningModal(true);
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -679,43 +745,10 @@ export function ModalProdutos({ isOpen, onClose }) {
       const token = localStorage.getItem("authToken");
 
       // Passo 1: Upload em Lote das Imagens
-      const uploadedImages = [];
-      for (let index = 0; index < images.length; index++) {
-        const img = images[index];
-        let url = img.url;
-
-        if (!url.startsWith("uploads/")) {
-          const formDataUpload = new FormData();
-          formDataUpload.append("imagem", img.file);
-
-          const uploadResponse = await fetch(`${API_BASE_URL}/produto/upload-imagem`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: formDataUpload
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error(`Falha no upload da imagem ${img.file?.name || index + 1}`);
-          }
-
-          const uploadData = await uploadResponse.json();
-          if (!uploadData.sucesso) {
-            throw new Error(uploadData.error || uploadData.mensagem || "Erro no upload da imagem");
-          }
-
-          url = uploadData.caminho;
-        }
-
-        uploadedImages.push({
-          url: url,
-          ordem: index + 1,
-          ehDestaque: img.isHighlight ? 1 : 0
-        });
-      }
+      const uploadedImages = await uploadImagesInBatch(token);
 
       // Passo 2: Cadastro do Produto
+      const formattedAttributes = compileAttributes();
       const payload = {
         nome: formData.titulo,
         sku: formData.sku,
@@ -732,20 +765,7 @@ export function ModalProdutos({ isOpen, onClose }) {
         imagens: uploadedImages
       };
 
-      const response = await fetch(`${API_BASE_URL}/produto`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok || !responseData.sucesso) {
-        throw new Error(responseData.error || responseData.mensagem || "Falha ao cadastrar o produto");
-      }
+      await registerProduct(token, payload);
 
       toast.success("Produto cadastrado com sucesso!");
       onClose();
