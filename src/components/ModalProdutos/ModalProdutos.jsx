@@ -98,7 +98,6 @@ export function ModalProdutos({ isOpen, onClose }) {
   const [showWarningModal, setShowWarningModal] = useState(false);
 
   const carregarAtributosCategoria = async (integracaoId, categoryId) => {
-    debugger;
     if (!integracaoId || !categoryId) return;
     
     setLoadingAttributes(true);
@@ -748,7 +747,7 @@ export function ModalProdutos({ isOpen, onClose }) {
       const uploadedImages = await uploadImagesInBatch(token);
 
       // Passo 2: Cadastro do Produto
-      const formattedAttributes = compileAttributes();
+      const caracteristicas = compileAttributes();
       const payload = {
         nome: formData.titulo,
         sku: formData.sku,
@@ -756,12 +755,11 @@ export function ModalProdutos({ isOpen, onClose }) {
         descricao: formData.descricao,
         condicao: formData.condicao,
         categoria_id: parseInt(formData.categoria, 10),
-        caracteristicas: characteristics,
+        caracteristicas: caracteristicas,
         gtin: formData.gtin,
         integracao_id: parseInt(formData.integracaoId, 10),
         quantidade_inicial: formData.estoqueAtual ? parseInt(formData.estoqueAtual, 10) : 0,
         quantidade_minima: formData.estoqueMinimo ? parseInt(formData.estoqueMinimo, 10) : 0,
-        attributes: formattedAttributes,
         imagens: uploadedImages
       };
 
