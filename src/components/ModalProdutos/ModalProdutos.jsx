@@ -86,6 +86,7 @@ export function ModalProdutos({ isOpen, onClose }) {
   const [categoriasInternas, setCategoriasInternas] = useState([]);
   const [integracoes, setIntegracoes] = useState([]);
   const [sugestoesCategoria, setSugestoesCategoria] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [mlAttributes, setMlAttributes] = useState([]);
   const [mlAttributeValues, setMlAttributeValues] = useState({});
@@ -504,6 +505,7 @@ export function ModalProdutos({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
+      setIsSubmitting(false);
       retornarIntegracoes();
       retornarCategoriasInternas();
       setActiveTab(1);
@@ -589,7 +591,7 @@ export function ModalProdutos({ isOpen, onClose }) {
     setCharacteristics({ ...characteristics, [name]: value });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     let newErrors = {};
 
     if (!formData.integracaoId) newErrors.integracaoId = true;
@@ -671,20 +673,88 @@ export function ModalProdutos({ isOpen, onClose }) {
       }
     });
 
-    const payload = {
-        ...formData,
-        preco: parseFloat(formData.preco.replace(/\./g, '').replace(',', '.')), // Converte para float
-        attributes: formattedAttributes,
-        images: images.map((img, index) => ({
-             id: img.id,
-             isHighlight: img.isHighlight,
-             order: index
-        }))
-    };
+    setIsSubmitting(true);
 
-    console.log("Produto a ser salvo:", payload);
-    alert("Produto mockado gerado com sucesso! Verifique o console para os dados.");
-    onClose();
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // Passo 1: Upload em Lote das Imagens
+      const uploadedImages = [];
+      for (let index = 0; index < images.length; index++) {
+        const img = images[index];
+        let url = img.url;
+
+        if (!url.startsWith("uploads/")) {
+          const formDataUpload = new FormData();
+          formDataUpload.append("imagem", img.file);
+
+          const uploadResponse = await fetch(`${API_BASE_URL}/produto/upload-imagem`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formDataUpload
+          });
+
+          if (!uploadResponse.ok) {
+            throw new Error(`Falha no upload da imagem ${img.file?.name || index + 1}`);
+          }
+
+          const uploadData = await uploadResponse.json();
+          if (!uploadData.sucesso) {
+            throw new Error(uploadData.error || uploadData.mensagem || "Erro no upload da imagem");
+          }
+
+          url = uploadData.caminho;
+        }
+
+        uploadedImages.push({
+          url: url,
+          ordem: index + 1,
+          ehDestaque: img.isHighlight ? 1 : 0
+        });
+      }
+
+      // Passo 2: Cadastro do Produto
+      const payload = {
+        nome: formData.titulo,
+        sku: formData.sku,
+        preco: parseFloat(formData.preco.replace(/\./g, '').replace(',', '.')),
+        descricao: formData.descricao,
+        condicao: formData.condicao,
+        categoria_id: parseInt(formData.categoria, 10),
+        caracteristicas: characteristics,
+        gtin: formData.gtin,
+        integracao_id: parseInt(formData.integracaoId, 10),
+        quantidade_inicial: formData.estoqueAtual ? parseInt(formData.estoqueAtual, 10) : 0,
+        quantidade_minima: formData.estoqueMinimo ? parseInt(formData.estoqueMinimo, 10) : 0,
+        attributes: formattedAttributes,
+        imagens: uploadedImages
+      };
+
+      const response = await fetch(`${API_BASE_URL}/produto`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok || !responseData.sucesso) {
+        throw new Error(responseData.error || responseData.mensagem || "Falha ao cadastrar o produto");
+      }
+
+      toast.success("Produto cadastrado com sucesso!");
+      onClose();
+    } catch (error) {
+      console.error("Erro ao cadastrar produto:", error);
+      toast.error(error.message || "Erro ao realizar o cadastro do produto.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -925,11 +995,11 @@ export function ModalProdutos({ isOpen, onClose }) {
         </div>
 
         <div className={styles.modalFooter}>
-          <button className={styles.btnCancel} onClick={onClose}>
+          <button className={styles.btnCancel} onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </button>
-          <button className={styles.btnSubmit} onClick={handleSave}>
-            Cadastrar Produto
+          <button className={styles.btnSubmit} onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? "Cadastrando..." : "Cadastrar Produto"}
           </button>
         </div>
       </div>
