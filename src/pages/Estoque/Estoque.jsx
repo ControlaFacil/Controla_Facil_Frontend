@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ControleEstoque } from "../../components/ControleEstoque";
 import { Categorias } from "../../components/Categorias";
+import { HistoricoMovimentacao } from "../../components/HistoricoMovimentacao";
 import styles from "./Estoque.module.css";
 
 export function Estoque() {
@@ -23,10 +24,17 @@ export function Estoque() {
         >
           Categorias
         </button>
+        <button
+          className={`${styles.tabBtn} ${activeTab === 'historico' ? styles.activeTab : ''}`}
+          onClick={() => setActiveTab('historico')}
+        >
+          Histórico de Movimentação
+        </button>
       </div>
 
       {activeTab === 'estoque' && <ControleEstoque />}
       {activeTab === 'categorias' && <Categorias />}
+      {activeTab === 'historico' && <HistoricoMovimentacao />}
     </main>
   );
 }
