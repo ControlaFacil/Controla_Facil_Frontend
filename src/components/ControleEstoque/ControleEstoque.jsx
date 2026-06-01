@@ -239,14 +239,11 @@ export function ControleEstoque() {
 
   // ── Imagem de destaque ────────────────────────────────────────────────────
   const getImagemDestaque = (produto) => {
-    if (!produto.imagens || produto.imagens.length === 0) return null;
-    const destaque = produto.imagens.find((img) => img.destaque === 1 || img.ehDestaque === 1);
-    const img = destaque || produto.imagens[0];
-    const url = img.url_imagem || img.url || null;
+    // O campo `imagem_destaque` já vem na listagem via JOIN no backend
+    const url = produto.imagem_destaque || null;
     if (!url) return null;
-    // Se for relativo, monta a URL completa
     if (url.startsWith("http")) return url;
-    return `${API_BASE_URL.replace("/api", "")}/${url}`;
+    return `${API_BASE_URL}/${url}`;
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -312,6 +309,10 @@ export function ControleEstoque() {
             />
           </div>
         </div>
+
+        <button className={estoqueStyles.btnAdd} onClick={() => setIsModalOpen(true)} style={{ whiteSpace: 'nowrap' }}>
+          <Plus size={20} /> Adicionar Produto
+        </button>
       </div>
 
       {/* ── Grid de produtos ─── */}
