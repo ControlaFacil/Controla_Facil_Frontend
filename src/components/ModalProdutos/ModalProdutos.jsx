@@ -760,6 +760,7 @@ export function ModalProdutos({ isOpen, onClose }) {
         integracao_id: parseInt(formData.integracaoId, 10),
         quantidade_inicial: formData.estoqueAtual ? parseInt(formData.estoqueAtual, 10) : 0,
         quantidade_minima: formData.estoqueMinimo ? parseInt(formData.estoqueMinimo, 10) : 0,
+        categoria_ml: formData.categoriaML,
         imagens: uploadedImages
       };
 
