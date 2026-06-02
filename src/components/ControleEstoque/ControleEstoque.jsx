@@ -12,6 +12,7 @@ import {
 import estoqueStyles from "../../pages/Estoque/Estoque.module.css";
 import styles from "./ControleEstoque.module.css";
 import { ModalProdutos } from "../ModalProdutos";
+import { ModalConfirmacao } from "../ModalConfirmacao";
 import { Loading } from "../Loading";
 import { API_BASE_URL } from "../../api";
 import { toast } from "react-toastify";
@@ -43,6 +44,8 @@ const SEARCH_FIELDS = [
 
 export function ControleEstoque() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [produtoParaSincronizar, setProdutoParaSincronizar] = useState(null);
 
   // Dados da API
   const [integracoes, setIntegracoes] = useState([]);
@@ -234,7 +237,20 @@ export function ControleEstoque() {
   };
 
   const handleSincronizar = (produto) => {
-    alert(`Sincronizar com Mercado Livre:\n• ID: ${produto.id}\n• Nome: ${produto.nome}\n• SKU: ${produto.sku}`);
+    setProdutoParaSincronizar(produto);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmarSincronizacao = () => {
+    alert("Produto sincronizado com sucesso!");
+    setIsConfirmModalOpen(false);
+    setProdutoParaSincronizar(null);
+  };
+
+  const handleCancelarSincronizacao = () => {
+    alert("Sincronização cancelada.");
+    setIsConfirmModalOpen(false);
+    setProdutoParaSincronizar(null);
   };
 
   // ── Imagem de destaque ────────────────────────────────────────────────────
@@ -460,6 +476,17 @@ export function ControleEstoque() {
       )}
 
       <ModalProdutos isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+      <ModalConfirmacao
+        isOpen={isConfirmModalOpen}
+        onClose={handleCancelarSincronizacao}
+        onConfirm={handleConfirmarSincronizacao}
+        title="Sincronizar Produto?"
+        message={`Deseja realmente sincronizar os dados do produto "${produtoParaSincronizar?.nome || ""}" para o Mercado Livre?`}
+        btnConfirmText="Sim, Sincronizar"
+        btnCancelText="Não, Cancelar"
+        variant="info"
+      />
     </div>
   );
 }
