@@ -383,7 +383,7 @@ export function ControleEstoque() {
                   <th>Preço</th>
                   <th>Categoria</th>
                   <th className={estoqueStyles.centered}>Estoque Atual</th>
-                  <th className={estoqueStyles.centered}>Status</th>
+                  <th className={estoqueStyles.centered}>Status do Estoque</th>
                   <th className={estoqueStyles.centered}>Ações</th>
                 </tr>
               </thead>
