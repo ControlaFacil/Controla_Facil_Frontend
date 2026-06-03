@@ -3,6 +3,8 @@ import { ControleEstoque } from "../../components/ControleEstoque";
 import { Categorias } from "../../components/Categorias";
 import { HistoricoMovimentacao } from "../../components/HistoricoMovimentacao";
 import styles from "./Estoque.module.css";
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export function Estoque() {
   const [activeTab, setActiveTab] = useState('estoque');
@@ -35,6 +37,7 @@ export function Estoque() {
       {activeTab === 'estoque' && <ControleEstoque />}
       {activeTab === 'categorias' && <Categorias />}
       {activeTab === 'historico' && <HistoricoMovimentacao />}
+      <ToastContainer autoClose={3000} />
     </main>
   );
 }

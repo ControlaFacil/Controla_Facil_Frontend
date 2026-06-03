@@ -45,7 +45,7 @@ const SEARCH_FIELDS = [
 export function ControleEstoque() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [produtoParaSincronizar, setProdutoParaSincronizar] = useState(null);
+  const [produtoIdParaSincronizar, setProdutoIdParaSincronizar] = useState(null);
 
   // Dados da API
   const [integracoes, setIntegracoes] = useState([]);
@@ -236,22 +236,52 @@ export function ControleEstoque() {
     alert(`Editar produto:\n• ID: ${produto.id}\n• Nome: ${produto.nome}\n• SKU: ${produto.sku}`);
   };
 
-  const handleSincronizar = (produto) => {
-    setProdutoParaSincronizar(produto);
+  const handleSincronizar = (produtoId) => {
+    setProdutoIdParaSincronizar(produtoId);
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmarSincronizacao = () => {
-    alert("Produto sincronizado com sucesso!");
+  const handleConfirmarSincronizacao = async () => {
+    const responsePublicarMl = await publicarProdutoML(produtoIdParaSincronizar);
+
+    if(responsePublicarMl.sucesso){
+      console.log("sucesso: " + responsePublicarMl.sucesso)
+      toast.success(responsePublicarMl.mensagem);
+    }else{
+      toast.error(responsePublicarMl.mensagem);
+    }
+
     setIsConfirmModalOpen(false);
-    setProdutoParaSincronizar(null);
+    setProdutoIdParaSincronizar(null);
   };
 
   const handleCancelarSincronizacao = () => {
     alert("Sincronização cancelada.");
     setIsConfirmModalOpen(false);
-    setProdutoParaSincronizar(null);
+    setProdutoIdParaSincronizar(null);
   };
+
+  const publicarProdutoML = async (produtoId) => {
+   try {
+    const token = localStorage.getItem("authToken");
+
+    // Enviar request para publicar
+    const response = await fetch(`${API_BASE_URL}/produto/mercado-livre/publicar/${produtoId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    
+    return data;
+   } catch (error) {
+    console.error("Erro ao publicar produto no Mercado Livre: " + error.message);
+    toast.error("Erro ao publicar produto no Mercado Livre.");
+   } 
+    
+  }
 
   // ── Imagem de destaque ────────────────────────────────────────────────────
   const getImagemDestaque = (produto) => {
@@ -439,7 +469,7 @@ export function ControleEstoque() {
                           <button
                             className={`${styles.actionBtn} ${styles.btnSincronizar}`}
                             title="Sincronizar com Mercado Livre"
-                            onClick={() => handleSincronizar(produto)}
+                            onClick={() => handleSincronizar(produto.id)}
                           >
                             <RefreshCw size={15} />
                             <span>Sincronizar</span>
@@ -482,7 +512,7 @@ export function ControleEstoque() {
         onClose={handleCancelarSincronizacao}
         onConfirm={handleConfirmarSincronizacao}
         title="Sincronizar Produto?"
-        message={`Deseja realmente sincronizar os dados do produto "${produtoParaSincronizar?.nome || ""}" para o Mercado Livre?`}
+        message={`Deseja realmente sincronizar os dados do produto "${produtoIdParaSincronizar?.nome || ""}" para o Mercado Livre?`}
         btnConfirmText="Sim, Sincronizar"
         btnCancelText="Não, Cancelar"
         variant="info"
