@@ -773,7 +773,7 @@ export function ModalProdutos({ isOpen, onClose, produtoId = null, onSaveSuccess
       const img = images[index];
       let url = img.url;
 
-      if (!url.startsWith("uploads/")) {
+      if (img.file) {
         const formDataUpload = new FormData();
         formDataUpload.append("imagem", img.file);
 
@@ -795,6 +795,10 @@ export function ModalProdutos({ isOpen, onClose, produtoId = null, onSaveSuccess
         }
 
         url = uploadData.caminho;
+      } else {
+        if (url.startsWith(`${API_BASE_URL}/`)) {
+          url = url.substring(API_BASE_URL.length + 1);
+        }
       }
 
       uploadedImages.push({
