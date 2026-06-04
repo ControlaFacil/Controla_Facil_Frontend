@@ -8,6 +8,9 @@ import {
   Store,
   ChevronDown,
   ImageOff,
+  Trash2,
+  Zap,
+  ExternalLink,
 } from "lucide-react";
 import estoqueStyles from "../../pages/Estoque/Estoque.module.css";
 import styles from "./ControleEstoque.module.css";
@@ -239,6 +242,18 @@ export function ControleEstoque() {
   const handleEditar = (produto) => {
     setProdutoIdParaEditar(produto.id);
     setIsEditModalOpen(true);
+  };
+
+  const handleExcluir = (produto) => {
+    alert(`Excluir produto: ${produto.nome}`);
+  };
+
+  const handleAjusteRapido = (produto) => {
+    alert(`Ajuste rápido de estoque para o produto: ${produto.nome}`);
+  };
+
+  const handleIrMercadoLivre = (produto) => {
+    alert(`Ir para o link do Mercado Livre para o produto: ${produto.nome}`);
   };
 
   const handleSincronizar = async (produto) => {
@@ -521,6 +536,30 @@ export function ControleEstoque() {
                           >
                             <RefreshCw size={15} />
                             <span>Sincronizar</span>
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.btnAjusteRapido}`}
+                            title="Ajuste rápido do estoque"
+                            onClick={() => handleAjusteRapido(produto)}
+                          >
+                            <Zap size={15} />
+                            <span>Ajuste Rápido</span>
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.btnMercadoLivre}`}
+                            title="Ver no Mercado Livre"
+                            onClick={() => handleIrMercadoLivre(produto)}
+                          >
+                            <ExternalLink size={15} />
+                            <span>Ver no ML</span>
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.btnExcluir}`}
+                            title="Excluir produto"
+                            onClick={() => handleExcluir(produto)}
+                          >
+                            <Trash2 size={15} />
+                            <span>Excluir</span>
                           </button>
                         </div>
                       </td>

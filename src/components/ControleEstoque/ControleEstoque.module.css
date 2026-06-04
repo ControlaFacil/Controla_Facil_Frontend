@@ -349,6 +349,42 @@
   to   { transform: rotate(360deg); }
 }
 
+.btnAjusteRapido {
+  background: #e8f5e9;
+  color: #2ecc71;
+}
+
+.btnAjusteRapido:hover {
+  background: #2ecc71;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(46, 204, 113, 0.25);
+}
+
+.btnMercadoLivre {
+  background: #fff159;
+  color: #2d3277;
+}
+
+.btnMercadoLivre:hover {
+  background: #2d3277;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(45, 50, 119, 0.25);
+}
+
+.btnExcluir {
+  background: #ffebee;
+  color: #e53935;
+}
+
+.btnExcluir:hover {
+  background: #e53935;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(229, 57, 53, 0.25);
+}
+
 /* ─── Responsividade ────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .topControls {
