@@ -16,6 +16,7 @@ import estoqueStyles from "../../pages/Estoque/Estoque.module.css";
 import styles from "./ControleEstoque.module.css";
 import { ModalProdutos } from "../ModalProdutos";
 import { ModalConfirmacao } from "../ModalConfirmacao";
+import { ModalAjusteRapido } from "../ModalAjusteRapido/ModalAjusteRapido";
 import { Loading } from "../Loading";
 import { API_BASE_URL } from "../../api";
 import { toast } from "react-toastify";
@@ -53,6 +54,9 @@ export function ControleEstoque() {
   const [produtoIdParaSincronizar, setProdutoIdParaSincronizar] = useState(null);
   const [produtoNomeParaSincronizar, setProdutoNomeParaSincronizar] = useState("");
   const [mlItemIdParaSincronizar, setMlItemIdParaSincronizar] = useState(null);
+
+  const [isAjusteModalOpen, setIsAjusteModalOpen] = useState(false);
+  const [produtoParaAjustar, setProdutoParaAjustar] = useState(null);
 
   // Dados da API
   const [integracoes, setIntegracoes] = useState([]);
@@ -249,7 +253,8 @@ export function ControleEstoque() {
   };
 
   const handleAjusteRapido = (produto) => {
-    alert(`Ajuste rápido de estoque para o produto: ${produto.nome}`);
+    setProdutoParaAjustar(produto);
+    setIsAjusteModalOpen(true);
   };
 
   const handleIrMercadoLivre = (produto) => {
@@ -621,6 +626,16 @@ export function ControleEstoque() {
         btnConfirmText={mlItemIdParaSincronizar ? "Sim, Atualizar" : "Sim, Sincronizar"}
         btnCancelText="Não, Cancelar"
         variant="info"
+      />
+
+      <ModalAjusteRapido
+        isOpen={isAjusteModalOpen}
+        onClose={() => {
+          setIsAjusteModalOpen(false);
+          setProdutoParaAjustar(null);
+        }}
+        produto={produtoParaAjustar}
+        onSaveSuccess={carregarProdutos}
       />
     </div>
   );

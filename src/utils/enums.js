@@ -8,3 +8,8 @@ export const StatusIntegracao = Object.freeze({
 export const Marketplace = Object.freeze({
     MERCADO_LIVRE: 1,
 });
+
+export const tipoMovimentacaoEstoque = Object.freeze({
+  ENTRADA: 1,
+  SAIDA: 2
+});

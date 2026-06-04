@@ -1114,7 +1114,7 @@ Registra a entrada ou saída de itens do estoque de um produto, atualizando em t
     | :--- | :--- | :--- | :--- |
     | `produto_id` | Integer | **Sim** | ID do produto cuja quantidade será alterada. |
     | `quantidade` | Integer | **Sim** | Quantidade movimentada (deve ser um número positivo). |
-    | `tipo` | String | **Sim** | Sentido do fluxo. Deve ser estritamente `ENTRADA` ou `SAIDA`. |
+    | `tipo` | String | **Sim** | Sentido do fluxo. Deve ser estritamente `1 (ENTRADA)` ou `2 (SAIDA)`. |
     | `motivo` | String | Não | Texto descritivo para histórico (Ex: "Ajuste inventário", "Venda Balcão"). |
     | `usuario_id` | Integer | Não | ID do usuário que fez a movimentação (Padrão: resolve de `req.usuario.id`, senão do corpo, senão resolve para `5`). |
 
