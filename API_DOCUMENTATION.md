@@ -1022,6 +1022,53 @@ Realiza o upload físico de um arquivo de imagem para o servidor. O arquivo é a
 
 ---
 
+### 4.7. Publicar Produto no Mercado Livre
+Publica um produto do sistema local como um novo anúncio no Mercado Livre, utilizando os dados já cadastrados (estoque, imagens, categoria, etc).
+
+*   **Método:** `POST`
+*   **URL:** `/api/produto/mercado-livre/publicar/:produtoId`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `produtoId` (Integer, Obrigatório): ID do produto no sistema a ser publicado.
+*   **Corpo da Requisição:** N/A (Os dados são extraídos do banco de dados do sistema).
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "mensagem": "Produto publicado com sucesso",
+          "produtoML": { "id": "MLB123456789", "title": "...", "price": 24.90, "..." },
+          "produtoAtualizado": { "id": 15, "ml_item_id": "MLB123456789", "..." }
+        }
+        ```
+    *   **404 Not Found:** Produto, estoque ou imagens não encontrados.
+    *   **500 Internal Server Error:** Falha ao publicar produto no Mercado Livre.
+
+---
+
+### 4.8. Editar Produto no Mercado Livre
+Atualiza as informações de um anúncio já existente no Mercado Livre com base nos dados atuais do produto no sistema local (preço, quantidade disponível em estoque, condição, características, fotos e descrição).
+
+*   **Método:** `PUT`
+*   **URL:** `/api/produto/mercado-livre/editar/:produtoId`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `produtoId` (Integer, Obrigatório): ID do produto no sistema local que já está vinculado ao Mercado Livre.
+*   **Corpo da Requisição:** N/A (Os dados são extraídos do banco de dados do sistema).
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "mensagem": "Produto editado com sucesso",
+          "produtoAtualizadoML": { "id": "MLB123456789", "title": "...", "price": 29.90, "..." },
+          "descricaoMl": { "text": "Nova descrição..." }
+        }
+        ```
+    *   **500 Internal Server Error:** Falha ao editar o produto no Mercado Livre.
+
+---
+
 ## 📁 5. Estoque (`src/features/estoque`)
 
 Gestão de saldos de estoque físico e registro histórico de movimentações (entradas e saídas).

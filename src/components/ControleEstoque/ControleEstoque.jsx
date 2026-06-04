@@ -48,6 +48,8 @@ export function ControleEstoque() {
   const [produtoIdParaEditar, setProdutoIdParaEditar] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [produtoIdParaSincronizar, setProdutoIdParaSincronizar] = useState(null);
+  const [produtoNomeParaSincronizar, setProdutoNomeParaSincronizar] = useState("");
+  const [mlItemIdParaSincronizar, setMlItemIdParaSincronizar] = useState(null);
 
   // Dados da API
   const [integracoes, setIntegracoes] = useState([]);
@@ -239,52 +241,95 @@ export function ControleEstoque() {
     setIsEditModalOpen(true);
   };
 
-  const handleSincronizar = (produtoId) => {
-    setProdutoIdParaSincronizar(produtoId);
-    setIsConfirmModalOpen(true);
+  const handleSincronizar = async (produto) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/produto/${produto.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (data.sucesso) {
+        const prod = data.produto;
+        setProdutoIdParaSincronizar(prod.id);
+        setProdutoNomeParaSincronizar(prod.nome);
+        setMlItemIdParaSincronizar(prod.ml_item_id);
+        setIsConfirmModalOpen(true);
+      } else {
+        toast.error("Erro ao buscar informações atualizadas do produto.");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar produto:", error);
+      toast.error("Erro ao carregar dados do produto.");
+    }
   };
 
   const handleConfirmarSincronizacao = async () => {
-    const responsePublicarMl = await publicarProdutoML(produtoIdParaSincronizar);
+    let response;
+    if (mlItemIdParaSincronizar) {
+      response = await editarProdutoML(produtoIdParaSincronizar);
+    } else {
+      response = await publicarProdutoML(produtoIdParaSincronizar);
+    }
 
-    if(responsePublicarMl.sucesso){
-      console.log("sucesso: " + responsePublicarMl.sucesso)
-      toast.success(responsePublicarMl.mensagem);
-    }else{
-      toast.error(responsePublicarMl.mensagem);
+    if (response && response.sucesso) {
+      toast.success(response.mensagem);
+      carregarProdutos();
+    } else {
+      toast.error(response?.mensagem || "Erro na sincronização.");
     }
 
     setIsConfirmModalOpen(false);
     setProdutoIdParaSincronizar(null);
+    setProdutoNomeParaSincronizar("");
+    setMlItemIdParaSincronizar(null);
   };
 
   const handleCancelarSincronizacao = () => {
-    alert("Sincronização cancelada.");
     setIsConfirmModalOpen(false);
     setProdutoIdParaSincronizar(null);
+    setProdutoNomeParaSincronizar("");
+    setMlItemIdParaSincronizar(null);
   };
 
   const publicarProdutoML = async (produtoId) => {
-   try {
-    const token = localStorage.getItem("authToken");
+    try {
+      const token = localStorage.getItem("authToken");
 
-    // Enviar request para publicar
-    const response = await fetch(`${API_BASE_URL}/produto/mercado-livre/publicar/${produtoId}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      // Enviar request para publicar
+      const response = await fetch(`${API_BASE_URL}/produto/mercado-livre/publicar/${produtoId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const data = await response.json();
-    
-    return data;
-   } catch (error) {
-    console.error("Erro ao publicar produto no Mercado Livre: " + error.message);
-    toast.error("Erro ao publicar produto no Mercado Livre.");
-   } 
-    
-  }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Erro ao publicar produto no Mercado Livre: " + error.message);
+      return { sucesso: false, mensagem: "Erro ao publicar produto no Mercado Livre." };
+    }
+  };
+
+  const editarProdutoML = async (produtoId) => {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      // Enviar request para editar
+      const response = await fetch(`${API_BASE_URL}/produto/mercado-livre/editar/${produtoId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Erro ao atualizar produto no Mercado Livre: " + error.message);
+      return { sucesso: false, mensagem: "Erro ao atualizar produto no Mercado Livre." };
+    }
+  };
 
   // ── Imagem de destaque ────────────────────────────────────────────────────
   const getImagemDestaque = (produto) => {
@@ -472,7 +517,7 @@ export function ControleEstoque() {
                           <button
                             className={`${styles.actionBtn} ${styles.btnSincronizar}`}
                             title="Sincronizar com Mercado Livre"
-                            onClick={() => handleSincronizar(produto.id)}
+                            onClick={() => handleSincronizar(produto)}
                           >
                             <RefreshCw size={15} />
                             <span>Sincronizar</span>
@@ -528,9 +573,13 @@ export function ControleEstoque() {
         isOpen={isConfirmModalOpen}
         onClose={handleCancelarSincronizacao}
         onConfirm={handleConfirmarSincronizacao}
-        title="Sincronizar Produto?"
-        message={`Deseja realmente sincronizar os dados do produto "${produtoIdParaSincronizar?.nome || ""}" para o Mercado Livre?`}
-        btnConfirmText="Sim, Sincronizar"
+        title={mlItemIdParaSincronizar ? "Atualizar Anúncio no Mercado Livre?" : "Sincronizar Produto?"}
+        message={
+          mlItemIdParaSincronizar
+            ? `Deseja realmente atualizar os dados do anúncio "${produtoNomeParaSincronizar}" no Mercado Livre? Isso atualizará o preço, estoque, descrição e características do anúncio existente.`
+            : `Deseja realmente sincronizar os dados do produto "${produtoNomeParaSincronizar}" para o Mercado Livre?`
+        }
+        btnConfirmText={mlItemIdParaSincronizar ? "Sim, Atualizar" : "Sim, Sincronizar"}
         btnCancelText="Não, Cancelar"
         variant="info"
       />
