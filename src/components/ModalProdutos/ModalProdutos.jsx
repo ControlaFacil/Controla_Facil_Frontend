@@ -81,12 +81,13 @@ function SortableImage({ image, onDelete, onHighlight }) {
   );
 }
 
-export function ModalProdutos({ isOpen, onClose }) {
+export function ModalProdutos({ isOpen, onClose, produtoId = null, onSaveSuccess = null }) {
   const [activeTab, setActiveTab] = useState(1);
   const [categoriasInternas, setCategoriasInternas] = useState([]);
   const [integracoes, setIntegracoes] = useState([]);
   const [sugestoesCategoria, setSugestoesCategoria] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(false);
 
   const [mlAttributes, setMlAttributes] = useState([]);
   const [mlAttributeValues, setMlAttributeValues] = useState({});
@@ -97,7 +98,7 @@ export function ModalProdutos({ isOpen, onClose }) {
   const [errors, setErrors] = useState({});
   const [showWarningModal, setShowWarningModal] = useState(false);
 
-  const carregarAtributosCategoria = async (integracaoId, categoryId) => {
+  const carregarAtributosCategoria = async (integracaoId, categoryId, savedValues = null) => {
     if (!integracaoId || !categoryId) return;
     
     setLoadingAttributes(true);
@@ -132,7 +133,12 @@ export function ModalProdutos({ isOpen, onClose }) {
             initialValues[attr.id] = '';
           }
         });
-        setMlAttributeValues(initialValues);
+        
+        if (savedValues) {
+          setMlAttributeValues({ ...initialValues, ...savedValues });
+        } else {
+          setMlAttributeValues(initialValues);
+        }
         
         // Initialize accordion state - open all groups by default
         const initialOpen = {};
@@ -503,6 +509,90 @@ export function ModalProdutos({ isOpen, onClose }) {
   //#endregion
 
   useEffect(() => {
+    const carregarDadosProduto = async () => {
+      setLoadingProduct(true);
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${API_BASE_URL}/produto/${produtoId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.sucesso && data.produto) {
+          const prod = data.produto;
+          
+          const formatPreco = (val) => {
+            if (val === undefined || val === null) return "";
+            let stringVal = Number(val).toFixed(2).replace(".", ",");
+            stringVal = stringVal.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            stringVal = stringVal.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            return stringVal;
+          };
+
+          setFormData({
+            integracaoId: prod.integracao_id || '',
+            titulo: prod.nome || '',
+            sku: prod.sku || '',
+            categoria: prod.categoria_id || '',
+            categoriaML: prod.ml_categoria_id || '',
+            preco: formatPreco(prod.preco),
+            gtin: prod.gtin || '',
+            condicao: prod.condicao || 'new',
+            descricao: prod.descricao || '',
+            estoqueAtual: prod.estoque || 0,
+            estoqueMinimo: prod.estoqueMinimo || 0,
+          });
+
+          const loadedImages = (prod.imagens || []).map(img => ({
+            id: String(img.id),
+            url: img.url_imagem.startsWith("http") ? img.url_imagem : `${API_BASE_URL}/${img.url_imagem}`,
+            file: null,
+            isHighlight: img.destaque === 1,
+          }));
+          setImages(loadedImages);
+
+          let initialAttrValues = null;
+          if (prod.caracteristicas) {
+            try {
+              const parsed = typeof prod.caracteristicas === 'string'
+                ? JSON.parse(prod.caracteristicas)
+                : prod.caracteristicas;
+              
+              if (Array.isArray(parsed)) {
+                initialAttrValues = {};
+                parsed.forEach(attr => {
+                  if (attr.value_number !== undefined) {
+                    initialAttrValues[attr.id] = {
+                      value: attr.value_number,
+                      unit: attr.value_unit_id || ''
+                    };
+                  } else if (attr.value_id !== undefined) {
+                    initialAttrValues[attr.id] = attr.value_id;
+                  } else if (attr.value_name !== undefined) {
+                    initialAttrValues[attr.id] = attr.value_name;
+                  }
+                });
+              }
+            } catch (e) {
+              console.error("Erro ao fazer parse das características:", e);
+            }
+          }
+
+          if (prod.ml_categoria_id) {
+            carregarAtributosCategoria(prod.integracao_id, prod.ml_categoria_id, initialAttrValues);
+          }
+        } else {
+          toast.error("Erro ao carregar dados do produto.");
+        }
+      } catch (error) {
+        console.error("Falha ao carregar produto:", error);
+        toast.error("Falha ao carregar dados do produto.");
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+
     if (isOpen) {
       setIsSubmitting(false);
       retornarIntegracoes();
@@ -535,8 +625,14 @@ export function ModalProdutos({ isOpen, onClose }) {
       setOpenGroups({});
       setErrors({});
       setShowWarningModal(false);
+
+      if (produtoId) {
+        carregarDadosProduto();
+      } else {
+        setLoadingProduct(false);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, produtoId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -729,6 +825,25 @@ export function ModalProdutos({ isOpen, onClose }) {
     return responseData;
   };
 
+  const updateProduct = async (token, payload) => {
+    const response = await fetch(`${API_BASE_URL}/produto/${produtoId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok || !responseData.sucesso) {
+      throw new Error(responseData.error || responseData.mensagem || "Falha ao atualizar o produto");
+    }
+
+    return responseData;
+  };
+
   const handleSave = async () => {
     const newErrors = validateForm();
 
@@ -746,31 +861,53 @@ export function ModalProdutos({ isOpen, onClose }) {
       // Passo 1: Upload em Lote das Imagens
       const uploadedImages = await uploadImagesInBatch(token);
 
-      // Passo 2: Cadastro do Produto
+      // Passo 2: Cadastro / Edição do Produto
       const caracteristicas = compileAttributes();
-      const payload = {
-        nome: formData.titulo,
-        sku: formData.sku,
-        preco: parseFloat(formData.preco.replace(/\./g, '').replace(',', '.')),
-        descricao: formData.descricao,
-        condicao: formData.condicao,
-        categoria_id: parseInt(formData.categoria, 10),
-        caracteristicas: caracteristicas,
-        gtin: formData.gtin,
-        integracao_id: parseInt(formData.integracaoId, 10),
-        quantidade_inicial: formData.estoqueAtual ? parseInt(formData.estoqueAtual, 10) : 0,
-        quantidade_minima: formData.estoqueMinimo ? parseInt(formData.estoqueMinimo, 10) : 0,
-        categoria_ml: formData.categoriaML,
-        imagens: uploadedImages
-      };
+      
+      if (produtoId) {
+        const payload = {
+          nome: formData.titulo,
+          sku: formData.sku,
+          preco: parseFloat(formData.preco.replace(/\./g, '').replace(',', '.')),
+          descricao: formData.descricao,
+          condicao: formData.condicao,
+          categoria_id: parseInt(formData.categoria, 10),
+          caracteristicas: caracteristicas,
+          gtin: formData.gtin,
+          quantidade_minima: formData.estoqueMinimo ? parseInt(formData.estoqueMinimo, 10) : 0,
+          imagens: uploadedImages
+        };
 
-      await registerProduct(token, payload);
+        await updateProduct(token, payload);
+        toast.success("Produto atualizado com sucesso!");
+      } else {
+        const payload = {
+          nome: formData.titulo,
+          sku: formData.sku,
+          preco: parseFloat(formData.preco.replace(/\./g, '').replace(',', '.')),
+          descricao: formData.descricao,
+          condicao: formData.condicao,
+          categoria_id: parseInt(formData.categoria, 10),
+          caracteristicas: caracteristicas,
+          gtin: formData.gtin,
+          integracao_id: parseInt(formData.integracaoId, 10),
+          quantidade_inicial: formData.estoqueAtual ? parseInt(formData.estoqueAtual, 10) : 0,
+          quantidade_minima: formData.estoqueMinimo ? parseInt(formData.estoqueMinimo, 10) : 0,
+          categoria_ml: formData.categoriaML,
+          imagens: uploadedImages
+        };
 
-      toast.success("Produto cadastrado com sucesso!");
+        await registerProduct(token, payload);
+        toast.success("Produto cadastrado com sucesso!");
+      }
+
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
       onClose();
     } catch (error) {
-      console.error("Erro ao cadastrar produto:", error);
-      toast.error(error.message || "Erro ao realizar o cadastro do produto.");
+      console.error("Erro ao salvar produto:", error);
+      toast.error(error.message || "Erro ao realizar o salvamento do produto.");
     } finally {
       setIsSubmitting(false);
     }
@@ -794,7 +931,7 @@ export function ModalProdutos({ isOpen, onClose }) {
       )}
       <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>
-          <h2>Cadastrar Novo Produto</h2>
+          <h2>{produtoId ? "Editar Produto" : "Cadastrar Novo Produto"}</h2>
           <button className={styles.closeBtn} onClick={onClose}>
             <X size={20} />
           </button>
@@ -822,17 +959,24 @@ export function ModalProdutos({ isOpen, onClose }) {
         </div>
 
         <div className={styles.modalBody}>
-          {activeTab === 1 && (
-            <div className={styles.formGrid}>
-              <div className={styles.inputGroup}>
-                <label>Integração</label>
-                <select name="integracaoId" value={formData.integracaoId} onChange={handleFormChange} className={errors.integracaoId ? styles.errorBorder : ''}>
-                  <option value="">Selecione uma integração...</option>
-                  {integracoes.map((int) => (
-                    <option key={int.id} value={int.id}>{int.nome}</option>
-                  ))}
-                </select>
-              </div>
+          {loadingProduct ? (
+            <div className={styles.loadingContainer} style={{ minHeight: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+              <div className={styles.spinner}></div>
+              <p style={{ color: '#64748b' }}>Carregando dados do produto...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 1 && (
+                <div className={styles.formGrid}>
+                  <div className={styles.inputGroup}>
+                    <label>Integração</label>
+                    <select name="integracaoId" value={formData.integracaoId} onChange={handleFormChange} className={errors.integracaoId ? styles.errorBorder : ''} disabled={!!produtoId}>
+                      <option value="">Selecione uma integração...</option>
+                      {integracoes.map((int) => (
+                        <option key={int.id} value={int.id}>{int.nome}</option>
+                      ))}
+                    </select>
+                  </div>
               <div className={styles.inputGroup}>
                 <label>Título do Anúncio</label>
                 <input 
@@ -877,7 +1021,7 @@ export function ModalProdutos({ isOpen, onClose }) {
               </div>
               <div className={styles.inputGroup}>
                 <label>Estoque Atual</label>
-                <input type="number" name="estoqueAtual" value={formData.estoqueAtual} onChange={handleFormChange} min="0" />
+                <input type="number" name="estoqueAtual" value={formData.estoqueAtual} onChange={handleFormChange} min="0" disabled={!!produtoId} />
               </div>
               <div className={styles.inputGroup}>
                 <label>Estoque Mínimo</label>
@@ -900,13 +1044,19 @@ export function ModalProdutos({ isOpen, onClose }) {
                   Categoria Mercado Livre
                   <Info size={16} title="Esta é a categoria à qual o produto será vinculado ao ser anunciado no Mercado Livre. Seu conteúdo é sugerido com base no Título digitado para o produto." style={{cursor: 'help'}} />
                 </label>
-                <select name="categoriaML" value={formData.categoriaML} onChange={handleFormChange}>
-                  <option value="">Selecione a categoria do Mercado Livre...</option>
-                  {sugestoesCategoria.map((cat) => (
-                    <option key={cat.category_id} value={cat.category_id}>
-                      {cat.category_name} ({cat.domain_name})
-                    </option>
-                  ))}
+                <select name="categoriaML" value={formData.categoriaML} onChange={handleFormChange} disabled={!!produtoId}>
+                  {produtoId ? (
+                    <option value={formData.categoriaML}>{formData.categoriaML}</option>
+                  ) : (
+                    <>
+                      <option value="">Selecione a categoria do Mercado Livre...</option>
+                      {sugestoesCategoria.map((cat) => (
+                        <option key={cat.category_id} value={cat.category_id}>
+                          {cat.category_name} ({cat.domain_name})
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               </div>
               
@@ -1011,14 +1161,18 @@ export function ModalProdutos({ isOpen, onClose }) {
               )}
             </div>
           )}
-        </div>
+          </>
+        )}
+      </div>
 
         <div className={styles.modalFooter}>
           <button className={styles.btnCancel} onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </button>
           <button className={styles.btnSubmit} onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? "Cadastrando..." : "Cadastrar Produto"}
+            {isSubmitting
+              ? (produtoId ? "Salvando..." : "Cadastrando...")
+              : (produtoId ? "Salvar Alterações" : "Cadastrar Produto")}
           </button>
         </div>
       </div>

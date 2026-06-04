@@ -44,6 +44,8 @@ const SEARCH_FIELDS = [
 
 export function ControleEstoque() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [produtoIdParaEditar, setProdutoIdParaEditar] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [produtoIdParaSincronizar, setProdutoIdParaSincronizar] = useState(null);
 
@@ -113,31 +115,31 @@ export function ControleEstoque() {
   }, []);
 
   // ── Buscar produtos ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const fetchProdutos = async () => {
-      try {
-        setLoadingProdutos(true);
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(`${API_BASE_URL}/produto`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
+  const carregarProdutos = async () => {
+    try {
+      setLoadingProdutos(true);
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/produto`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
 
-        if (data.sucesso) {
-          setProdutos(data.produtos);
-          fetchEstoques(data.produtos, token);
-        } else {
-          setProdutos([]);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar produtos:", error);
-        toast.error("Erro ao carregar produtos.");
-      } finally {
-        setLoadingProdutos(false);
+      if (data.sucesso) {
+        setProdutos(data.produtos);
+        fetchEstoques(data.produtos, token);
+      } else {
+        setProdutos([]);
       }
-    };
+    } catch (error) {
+      console.error("Erro ao buscar produtos:", error);
+      toast.error("Erro ao carregar produtos.");
+    } finally {
+      setLoadingProdutos(false);
+    }
+  };
 
-    fetchProdutos();
+  useEffect(() => {
+    carregarProdutos();
   }, []);
 
   // ── Buscar estoque de cada produto ───────────────────────────────────────
@@ -233,7 +235,8 @@ export function ControleEstoque() {
 
   // ── Ações de botões ───────────────────────────────────────────────────────
   const handleEditar = (produto) => {
-    alert(`Editar produto:\n• ID: ${produto.id}\n• Nome: ${produto.nome}\n• SKU: ${produto.sku}`);
+    setProdutoIdParaEditar(produto.id);
+    setIsEditModalOpen(true);
   };
 
   const handleSincronizar = (produtoId) => {
@@ -505,7 +508,21 @@ export function ControleEstoque() {
         </div>
       )}
 
-      <ModalProdutos isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <ModalProdutos
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSaveSuccess={carregarProdutos}
+      />
+
+      <ModalProdutos
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setProdutoIdParaEditar(null);
+        }}
+        produtoId={produtoIdParaEditar}
+        onSaveSuccess={carregarProdutos}
+      />
 
       <ModalConfirmacao
         isOpen={isConfirmModalOpen}
