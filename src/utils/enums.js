@@ -19,3 +19,9 @@ export const produtoStatus = Object.freeze({
   INATIVO: 1,
   EXCLUIDO: 2
 });
+
+export const statusProduto = Object.freeze({
+  ATIVO: 0,
+  PAUSADO: 1,
+  ENCERRADO: 2
+});
