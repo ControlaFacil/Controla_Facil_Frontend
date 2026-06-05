@@ -382,7 +382,11 @@ export function ControleEstoque() {
   };
 
   const handleIrMercadoLivre = (produto) => {
-    alert(`Ir para o link do Mercado Livre para o produto: ${produto.nome}`);
+    if (!produto.ml_link_anuncio) {
+      toast.warning("Anúncio do Mercado Livre não encontrado. Por favor, sincronize o produto novamente.");
+    } else {
+      window.open(produto.ml_link_anuncio, "_blank");
+    }
   };
 
   const handleSincronizar = async (produto) => {
