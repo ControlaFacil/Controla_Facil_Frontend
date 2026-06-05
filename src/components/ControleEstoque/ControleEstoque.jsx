@@ -17,9 +17,11 @@ import styles from "./ControleEstoque.module.css";
 import { ModalProdutos } from "../ModalProdutos";
 import { ModalConfirmacao } from "../ModalConfirmacao";
 import { ModalAjusteRapido } from "../ModalAjusteRapido/ModalAjusteRapido";
+import { ModalRemoverProduto } from "../ModalRemoverProduto/ModalRemoverProduto";
 import { Loading } from "../Loading";
 import { API_BASE_URL } from "../../api";
 import { toast } from "react-toastify";
+import { produtoStatus } from "../../utils/enums";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -57,6 +59,10 @@ export function ControleEstoque() {
 
   const [isAjusteModalOpen, setIsAjusteModalOpen] = useState(false);
   const [produtoParaAjustar, setProdutoParaAjustar] = useState(null);
+
+  const [isRemoverModalOpen, setIsRemoverModalOpen] = useState(false);
+  const [produtoParaRemover, setProdutoParaRemover] = useState(null);
+  const [mostrarInativos, setMostrarInativos] = useState(false);
 
   // Dados da API
   const [integracoes, setIntegracoes] = useState([]);
@@ -203,6 +209,13 @@ export function ControleEstoque() {
   const produtosFiltrados = useMemo(() => {
     let lista = [...produtos];
 
+    // Filtro de inativos
+    if (!mostrarInativos) {
+      lista = lista.filter((p) => p.excluido === produtoStatus.ATIVO);
+    } else {
+      lista = lista.filter((p) => p.excluido === produtoStatus.ATIVO || p.excluido === produtoStatus.INATIVO);
+    }
+
     // Filtro por integração
     if (integracaoSelecionada !== "todas") {
       lista = lista.filter(
@@ -240,7 +253,7 @@ export function ControleEstoque() {
     });
 
     return lista;
-  }, [produtos, integracaoSelecionada, searchField, searchValue, categorias, estoques]);
+  }, [produtos, integracaoSelecionada, searchField, searchValue, categorias, estoques, mostrarInativos]);
 
   // ── Ações de botões ───────────────────────────────────────────────────────
   const handleEditar = (produto) => {
@@ -248,8 +261,9 @@ export function ControleEstoque() {
     setIsEditModalOpen(true);
   };
 
-  const handleExcluir = (produto) => {
-    alert(`Excluir produto: ${produto.nome}`);
+  const handleRemover = (produto) => {
+    setProdutoParaRemover(produto);
+    setIsRemoverModalOpen(true);
   };
 
   const handleAjusteRapido = (produto) => {
@@ -424,6 +438,21 @@ export function ControleEstoque() {
           </div>
         </div>
 
+        {/* ── Visualizar Inativados ─── */}
+        <div className={styles.toggleWrapper}>
+          <span className={styles.toggleLabel} onClick={() => setMostrarInativos(!mostrarInativos)}>
+            Visualizar Inativados
+          </span>
+          <label className={styles.switch}>
+            <input
+              type="checkbox"
+              checked={mostrarInativos}
+              onChange={(e) => setMostrarInativos(e.target.checked)}
+            />
+            <span className={styles.slider}></span>
+          </label>
+        </div>
+
         <button className={estoqueStyles.btnAdd} onClick={() => setIsModalOpen(true)} style={{ whiteSpace: 'nowrap' }}>
           <Plus size={20} /> Adicionar Produto
         </button>
@@ -516,11 +545,19 @@ export function ControleEstoque() {
 
                       {/* Etiqueta de estoque */}
                       <td className={estoqueStyles.centered}>
-                        <span
-                          className={`${estoqueStyles.statusBadge} ${estoqueStyles[status.key]}`}
-                        >
-                          {status.label}
-                        </span>
+                        {produto.excluido === produtoStatus.INATIVO ? (
+                          <span
+                            className={`${estoqueStyles.statusBadge} ${styles.inativo}`}
+                          >
+                            Inativo
+                          </span>
+                        ) : (
+                          <span
+                            className={`${estoqueStyles.statusBadge} ${estoqueStyles[status.key]}`}
+                          >
+                            {status.label}
+                          </span>
+                        )}
                       </td>
 
                       {/* Ações */}
@@ -560,11 +597,11 @@ export function ControleEstoque() {
                           </button>
                           <button
                             className={`${styles.actionBtn} ${styles.btnExcluir}`}
-                            title="Excluir produto"
-                            onClick={() => handleExcluir(produto)}
+                            title="Remover produto"
+                            onClick={() => handleRemover(produto)}
                           >
                             <Trash2 size={15} />
-                            <span>Excluir</span>
+                            <span>Remover</span>
                           </button>
                         </div>
                       </td>
@@ -636,6 +673,15 @@ export function ControleEstoque() {
         }}
         produto={produtoParaAjustar}
         onSaveSuccess={carregarProdutos}
+      />
+
+      <ModalRemoverProduto
+        isOpen={isRemoverModalOpen}
+        onClose={() => {
+          setIsRemoverModalOpen(false);
+          setProdutoParaRemover(null);
+        }}
+        produto={produtoParaRemover}
       />
     </div>
   );

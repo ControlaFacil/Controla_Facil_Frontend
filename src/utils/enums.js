@@ -13,3 +13,9 @@ export const tipoMovimentacaoEstoque = Object.freeze({
   ENTRADA: 1,
   SAIDA: 2
 });
+
+export const produtoStatus = Object.freeze({
+  ATIVO: 0,
+  INATIVO: 1,
+  EXCLUIDO: 2
+});
