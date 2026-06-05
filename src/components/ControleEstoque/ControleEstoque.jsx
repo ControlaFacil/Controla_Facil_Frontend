@@ -307,6 +307,75 @@ export function ControleEstoque() {
     }
   };
 
+  const handleConfirmarInativacao = async (produto) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/produto/status/${produto.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: produtoStatus.INATIVO
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.sucesso) {
+        toast.success(data.mensagem || "Produto inativado com sucesso!");
+        carregarProdutos();
+      } else {
+        toast.error(data.error || "Erro ao inativar produto.");
+      }
+    } catch (error) {
+      console.error("Erro ao inativar produto:", error);
+      toast.error("Erro de conexão ao inativar o produto.");
+    }
+  };
+
+  const handleConfirmarExclusao = async (produto) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      
+      // Passo 1: Atualizar o status para excluído para sincronizar com o Mercado Livre (anúncio pausado/fechado)
+      const statusResponse = await fetch(`${API_BASE_URL}/produto/status/${produto.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: produtoStatus.EXCLUIDO
+        })
+      });
+
+      if (!statusResponse.ok) {
+        const errData = await statusResponse.json();
+        throw new Error(errData.error || "Erro ao atualizar status no Mercado Livre antes da exclusão.");
+      }
+
+      // Passo 2: Excluir o produto localmente
+      const deleteResponse = await fetch(`${API_BASE_URL}/produto/${produto.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await deleteResponse.json();
+      if (deleteResponse.ok && data.sucesso) {
+        toast.success(data.mensagem || "Produto excluído com sucesso!");
+        carregarProdutos();
+      } else {
+        toast.error(data.error || "Erro ao excluir produto localmente.");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir produto:", error);
+      toast.error(error.message || "Erro de conexão ao excluir o produto.");
+    }
+  };
+
   const handleAjusteRapido = (produto) => {
     setProdutoParaAjustar(produto);
     setIsAjusteModalOpen(true);
@@ -736,6 +805,8 @@ export function ControleEstoque() {
           setProdutoParaRemover(null);
         }}
         produto={produtoParaRemover}
+        onConfirmInativar={handleConfirmarInativacao}
+        onConfirmExcluir={handleConfirmarExclusao}
       />
 
       <ModalConfirmacao

@@ -1081,7 +1081,7 @@ Altera o status de exclusão/ativação do produto no banco de dados local e env
 
     | Campo | Tipo | Obrigatório? | Descrição |
     | :--- | :--- | :--- | :--- |
-    | `status` | Integer | **Sim** | Novo status interno do produto (0 = ATIVO, 1 = PAUSADO, 2 = ENCERRADO/EXCLUÍDO). |
+    | `status` | Integer | **Sim** | Novo status interno do produto (0 = ATIVO, 1 = INATIVO, 2 = EXCLUÍDO). |
 
     *Exemplo de envio:*
     ```json

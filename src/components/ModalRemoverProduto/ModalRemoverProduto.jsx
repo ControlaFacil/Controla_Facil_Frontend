@@ -1,27 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import styles from './ModalRemoverProduto.module.css';
 
-export function ModalRemoverProduto({ isOpen, onClose, produto }) {
+export function ModalRemoverProduto({ isOpen, onClose, produto, onConfirmInativar, onConfirmExcluir }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   if (!isOpen || !produto) return null;
 
-  const handleInativar = () => {
-    alert(`Inativar produto: ${produto.nome}`);
-    onClose();
+  const handleInativar = async () => {
+    setIsSubmitting(true);
+    try {
+      if (onConfirmInativar) {
+        await onConfirmInativar(produto);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Erro ao inativar produto no modal:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleExcluir = () => {
-    alert(`Excluir produto: ${produto.nome}`);
-    onClose();
+  const handleExcluir = async () => {
+    setIsSubmitting(true);
+    try {
+      if (onConfirmExcluir) {
+        await onConfirmExcluir(produto);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Erro ao excluir produto no modal:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay} onClick={isSubmitting ? null : onClose}>
       <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className={styles.modalHeader}>
           <h2>Remover Produto</h2>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar modal">
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar modal" disabled={isSubmitting}>
             <X size={20} />
           </button>
         </div>
@@ -63,14 +83,14 @@ export function ModalRemoverProduto({ isOpen, onClose, produto }) {
 
         {/* Footer */}
         <div className={styles.modalFooter}>
-          <button className={styles.btnCancel} onClick={onClose}>
+          <button className={styles.btnCancel} onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </button>
-          <button className={styles.btnInativar} onClick={handleInativar}>
-            Inativar Produto
+          <button className={styles.btnInativar} onClick={handleInativar} disabled={isSubmitting}>
+            {isSubmitting ? 'Aguarde...' : 'Inativar Produto'}
           </button>
-          <button className={styles.btnExcluir} onClick={handleExcluir}>
-            Excluir Definitivamente
+          <button className={styles.btnExcluir} onClick={handleExcluir} disabled={isSubmitting}>
+            {isSubmitting ? 'Aguarde...' : 'Excluir Definitivamente'}
           </button>
         </div>
       </div>
