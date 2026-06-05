@@ -385,6 +385,18 @@
   box-shadow: 0 4px 10px rgba(229, 57, 53, 0.25);
 }
 
+.btnReativar {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.btnReativar:hover {
+  background: #0284c7;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+}
+
 .toggleWrapper {
   display: flex;
   align-items: center;

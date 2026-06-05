@@ -64,6 +64,10 @@ export function ControleEstoque() {
   const [produtoParaRemover, setProdutoParaRemover] = useState(null);
   const [mostrarInativos, setMostrarInativos] = useState(false);
 
+  const [isReativarModalOpen, setIsReativarModalOpen] = useState(false);
+  const [produtoIdParaReativar, setProdutoIdParaReativar] = useState(null);
+  const [produtoNomeParaReativar, setProdutoNomeParaReativar] = useState("");
+
   // Dados da API
   const [integracoes, setIntegracoes] = useState([]);
   const [categorias, setCategorias] = useState({});
@@ -211,9 +215,9 @@ export function ControleEstoque() {
 
     // Filtro de inativos
     if (!mostrarInativos) {
-      lista = lista.filter((p) => p.excluido === produtoStatus.ATIVO);
+      lista = lista.filter((p) => Number(p.excluido) === produtoStatus.ATIVO);
     } else {
-      lista = lista.filter((p) => p.excluido === produtoStatus.ATIVO || p.excluido === produtoStatus.INATIVO);
+      lista = lista.filter((p) => Number(p.excluido) === produtoStatus.ATIVO || Number(p.excluido) === produtoStatus.INATIVO);
     }
 
     // Filtro por integração
@@ -264,6 +268,43 @@ export function ControleEstoque() {
   const handleRemover = (produto) => {
     setProdutoParaRemover(produto);
     setIsRemoverModalOpen(true);
+  };
+
+  const handleReativar = (produto) => {
+    setProdutoIdParaReativar(produto.id);
+    setProdutoNomeParaReativar(produto.nome);
+    setIsReativarModalOpen(true);
+  };
+
+  const handleConfirmarReativacao = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`${API_BASE_URL}/produto/status/${produtoIdParaReativar}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: produtoStatus.ATIVO
+        })
+      });
+
+      const data = await response.json();
+      if (data.sucesso) {
+        toast.success(data.mensagem || "Produto reativado com sucesso!");
+        carregarProdutos();
+      } else {
+        toast.error(data.error || "Erro ao reativar produto.");
+      }
+    } catch (error) {
+      console.error("Erro ao reativar produto:", error);
+      toast.error("Erro ao reativar o produto.");
+    } finally {
+      setIsReativarModalOpen(false);
+      setProdutoIdParaReativar(null);
+      setProdutoNomeParaReativar("");
+    }
   };
 
   const handleAjusteRapido = (produto) => {
@@ -545,7 +586,7 @@ export function ControleEstoque() {
 
                       {/* Etiqueta de estoque */}
                       <td className={estoqueStyles.centered}>
-                        {produto.excluido === produtoStatus.INATIVO ? (
+                        {Number(produto.excluido) === produtoStatus.INATIVO ? (
                           <span
                             className={`${estoqueStyles.statusBadge} ${styles.inativo}`}
                           >
@@ -563,46 +604,59 @@ export function ControleEstoque() {
                       {/* Ações */}
                       <td className={estoqueStyles.centered}>
                         <div className={styles.actionsCell}>
-                          <button
-                            className={`${styles.actionBtn} ${styles.btnEditar}`}
-                            title="Editar produto"
-                            onClick={() => handleEditar(produto)}
-                          >
-                            <Edit2 size={15} />
-                            <span>Editar</span>
-                          </button>
-                          <button
-                            className={`${styles.actionBtn} ${styles.btnSincronizar}`}
-                            title="Sincronizar com Mercado Livre"
-                            onClick={() => handleSincronizar(produto)}
-                          >
-                            <RefreshCw size={15} />
-                            <span>Sincronizar</span>
-                          </button>
-                          <button
-                            className={`${styles.actionBtn} ${styles.btnAjusteRapido}`}
-                            title="Ajuste rápido do estoque"
-                            onClick={() => handleAjusteRapido(produto)}
-                          >
-                            <Zap size={15} />
-                            <span>Ajuste Rápido</span>
-                          </button>
-                          <button
-                            className={`${styles.actionBtn} ${styles.btnMercadoLivre}`}
-                            title="Ver no Mercado Livre"
-                            onClick={() => handleIrMercadoLivre(produto)}
-                          >
-                            <ExternalLink size={15} />
-                            <span>Ver no ML</span>
-                          </button>
-                          <button
-                            className={`${styles.actionBtn} ${styles.btnExcluir}`}
-                            title="Remover produto"
-                            onClick={() => handleRemover(produto)}
-                          >
-                            <Trash2 size={15} />
-                            <span>Remover</span>
-                          </button>
+                          {Number(produto.excluido) === produtoStatus.INATIVO ? (
+                            <button
+                              className={`${styles.actionBtn} ${styles.btnReativar}`}
+                              title="Reativar produto"
+                              onClick={() => handleReativar(produto)}
+                            >
+                              <RefreshCw size={15} />
+                              <span>Reativar</span>
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnEditar}`}
+                                title="Editar produto"
+                                onClick={() => handleEditar(produto)}
+                              >
+                                <Edit2 size={15} />
+                                <span>Editar</span>
+                              </button>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnSincronizar}`}
+                                title="Sincronizar com Mercado Livre"
+                                onClick={() => handleSincronizar(produto)}
+                              >
+                                <RefreshCw size={15} />
+                                <span>Sincronizar</span>
+                              </button>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnAjusteRapido}`}
+                                title="Ajuste rápido do estoque"
+                                onClick={() => handleAjusteRapido(produto)}
+                              >
+                                <Zap size={15} />
+                                <span>Ajuste Rápido</span>
+                              </button>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnMercadoLivre}`}
+                                title="Ver no Mercado Livre"
+                                onClick={() => handleIrMercadoLivre(produto)}
+                              >
+                                <ExternalLink size={15} />
+                                <span>Ver no ML</span>
+                              </button>
+                              <button
+                                className={`${styles.actionBtn} ${styles.btnExcluir}`}
+                                title="Remover produto"
+                                onClick={() => handleRemover(produto)}
+                              >
+                                <Trash2 size={15} />
+                                <span>Remover</span>
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -682,6 +736,21 @@ export function ControleEstoque() {
           setProdutoParaRemover(null);
         }}
         produto={produtoParaRemover}
+      />
+
+      <ModalConfirmacao
+        isOpen={isReativarModalOpen}
+        onClose={() => {
+          setIsReativarModalOpen(false);
+          setProdutoIdParaReativar(null);
+          setProdutoNomeParaReativar("");
+        }}
+        onConfirm={handleConfirmarReativacao}
+        title="Reativar Produto?"
+        message={`Deseja realmente reativar o produto "${produtoNomeParaReativar}"?`}
+        btnConfirmText="Sim, Reativar"
+        btnCancelText="Não, Cancelar"
+        variant="success"
       />
     </div>
   );
