@@ -1069,6 +1069,63 @@ Atualiza as informações de um anúncio já existente no Mercado Livre com base
 
 ---
 
+### 4.9. Alterar Status do Produto
+Altera o status de exclusão/ativação do produto no banco de dados local e envia a atualização correspondente para o anúncio do Mercado Livre (ativo, pausado ou encerrado).
+
+*   **Método:** `PUT`
+*   **URL:** `/api/produto/status/:id`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `id` (Integer, Obrigatório): ID do produto no sistema local.
+*   **Corpo da Requisição (JSON):**
+
+    | Campo | Tipo | Obrigatório? | Descrição |
+    | :--- | :--- | :--- | :--- |
+    | `status` | Integer | **Sim** | Novo status interno do produto (0 = ATIVO, 1 = PAUSADO, 2 = ENCERRADO/EXCLUÍDO). |
+
+    *Exemplo de envio:*
+    ```json
+    {
+      "status": 1
+    }
+    ```
+
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "mensagem": "Produto alterado com sucesso",
+          "produtoAlteradoML": {
+            "id": "MLB123456789",
+            "status": "paused"
+          }
+        }
+        ```
+    *   **400 Bad Request:** Status inválido ou não mapeado para o Mercado Livre.
+        ```json
+        {
+          "error": "Status fornecido (9) é inválido para integração com o Mercado Livre.",
+          "sucesso": false
+        }
+        ```
+    *   **404 Not Found:** Produto com o ID especificado não encontrado.
+        ```json
+        {
+          "error": "Produto não encontrado",
+          "sucesso": false
+        }
+        ```
+    *   **500 Internal Server Error:** Falha ao atualizar o status local ou ao comunicar a alteração ao Mercado Livre.
+        ```json
+        {
+          "error": "Erro ao alterar status do produto: <mensagem do erro>",
+          "sucesso": false
+        }
+        ```
+
+---
+
 ## 📁 5. Estoque (`src/features/estoque`)
 
 Gestão de saldos de estoque físico e registro histórico de movimentações (entradas e saídas).
@@ -1114,7 +1171,7 @@ Registra a entrada ou saída de itens do estoque de um produto, atualizando em t
     | :--- | :--- | :--- | :--- |
     | `produto_id` | Integer | **Sim** | ID do produto cuja quantidade será alterada. |
     | `quantidade` | Integer | **Sim** | Quantidade movimentada (deve ser um número positivo). |
-    | `tipo` | String | **Sim** | Sentido do fluxo. Deve ser estritamente `1 (ENTRADA)` ou `2 (SAIDA)`. |
+    | `tipo` | String | **Sim** | Sentido do fluxo. Deve ser estritamente `ENTRADA` ou `SAIDA`. |
     | `motivo` | String | Não | Texto descritivo para histórico (Ex: "Ajuste inventário", "Venda Balcão"). |
     | `usuario_id` | Integer | Não | ID do usuário que fez a movimentação (Padrão: resolve de `req.usuario.id`, senão do corpo, senão resolve para `5`). |
 
