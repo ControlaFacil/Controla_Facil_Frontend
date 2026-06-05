@@ -1,104 +1,91 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, ArrowUpRight, ArrowDownLeft, CalendarDays } from "lucide-react";
 import styles from "./HistoricoMovimentacao.module.css";
-
-const MOCK_MOVIMENTACOES = [
-  {
-    id: 1,
-    dataHora: "31/05/2026 14:30",
-    movimento: "Entrada",
-    produto: "Caneta Azul",
-    sku: "CA001",
-    quantidade: 50,
-  },
-  {
-    id: 2,
-    dataHora: "31/05/2026 11:15",
-    movimento: "Saída",
-    produto: "Mouse Sem Fio ABC",
-    sku: "MS005",
-    quantidade: 10,
-  },
-  {
-    id: 3,
-    dataHora: "30/05/2026 16:45",
-    movimento: "Entrada",
-    produto: "Teclado Gamer",
-    sku: "TG002",
-    quantidade: 15,
-  },
-  {
-    id: 4,
-    dataHora: "30/05/2026 09:30",
-    movimento: "Saída",
-    produto: "Monitor LED 24\"",
-    sku: "MN007",
-    quantidade: 5,
-  },
-  {
-    id: 5,
-    dataHora: "29/05/2026 15:20",
-    movimento: "Entrada",
-    produto: "Caderno 10 Mat.",
-    sku: "CD010",
-    quantidade: 30,
-  },
-  {
-    id: 6,
-    dataHora: "28/05/2026 10:00",
-    movimento: "Entrada",
-    produto: "Lápis Preto",
-    sku: "LP002",
-    quantidade: 100,
-  },
-  {
-    id: 7,
-    dataHora: "27/05/2026 14:10",
-    movimento: "Saída",
-    produto: "Tinta Impressora XPTO",
-    sku: "TN001",
-    quantidade: 8,
-  },
-  {
-    id: 8,
-    dataHora: "26/05/2026 11:30",
-    movimento: "Saída",
-    produto: "Borracha Branca",
-    sku: "BB003",
-    quantidade: 20,
-  },
-  {
-    id: 9,
-    dataHora: "25/05/2026 17:00",
-    movimento: "Entrada",
-    produto: "Régua 30cm",
-    sku: "RG030",
-    quantidade: 40,
-  },
-  {
-    id: 10,
-    dataHora: "25/05/2026 08:45",
-    movimento: "Saída",
-    produto: "Grampeador de Mesa",
-    sku: "GP100",
-    quantidade: 2,
-  }
-];
+import { API_BASE_URL } from "../../api";
+import { Loading } from "../Loading";
 
 export function HistoricoMovimentacao() {
+  const [movimentacoes, setMovimentacoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState("Todos");
 
-  const filteredMovimentacoes = MOCK_MOVIMENTACOES.filter((item) => {
+  useEffect(() => {
+    const fetchMovimentacoes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${API_BASE_URL}/estoque/movimentacoes`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (data.sucesso) {
+          setMovimentacoes(data.movimentacoes || []);
+        } else {
+          setError(data.error || "Erro ao carregar o histórico de movimentações.");
+        }
+      } catch (err) {
+        console.error("Erro ao carregar movimentações:", err);
+        setError("Erro ao conectar ao servidor. Tente novamente mais tarde.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovimentacoes();
+  }, []);
+
+  const formatarData = (dataIso) => {
+    if (!dataIso) return "—";
+    try {
+      const data = new Date(dataIso);
+      if (isNaN(data.getTime())) return dataIso;
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const ano = data.getFullYear();
+      const hora = String(data.getHours()).padStart(2, "0");
+      const minuto = String(data.getMinutes()).padStart(2, "0");
+      return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
+    } catch (e) {
+      return dataIso;
+    }
+  };
+
+  const filteredMovimentacoes = movimentacoes.filter((item) => {
+    const isEntrada = item.tipo === 1 || String(item.tipo).toUpperCase() === "ENTRADA";
+    const movimentoLabel = isEntrada ? "Entrada" : "Saída";
+
     const matchesSearch =
-      item.produto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      (item.produto_nome || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.produto_sku || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.usuario_nome || "Sistema").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.motivo || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesTipo =
-      filterTipo === "Todos" || item.movimento === filterTipo;
+      filterTipo === "Todos" || movimentoLabel === filterTipo;
 
     return matchesSearch && matchesTipo;
   });
+
+  if (loading) {
+    return <Loading message="Carregando histórico..." />;
+  }
+
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.emptyState} style={{ borderColor: "#fca5a5" }}>
+          <div className={styles.emptyIcon} style={{ background: "#fee2e2", color: "#ef4444" }}>
+            <CalendarDays size={40} />
+          </div>
+          <h4>Erro ao carregar movimentações</h4>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -107,7 +94,7 @@ export function HistoricoMovimentacao() {
           <Search className={styles.searchIcon} size={20} />
           <input
             type="text"
-            placeholder="Buscar por produto ou SKU..."
+            placeholder="Buscar por produto, SKU, usuário ou motivo..."
             className={styles.inputSearch}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -143,30 +130,35 @@ export function HistoricoMovimentacao() {
                   <th>Produto</th>
                   <th>SKU</th>
                   <th className={styles.centered}>Quantidade</th>
+                  <th>Usuário</th>
+                  <th>Motivo</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredMovimentacoes.map((item) => {
-                  const isEntrada = item.movimento === "Entrada";
+                  const isEntrada = item.tipo === 1 || String(item.tipo).toUpperCase() === "ENTRADA";
                   const badgeClass = isEntrada ? styles.badgeEntrada : styles.badgeSaida;
                   const Icon = isEntrada ? ArrowUpRight : ArrowDownLeft;
+                  const movimentoLabel = isEntrada ? "Entrada" : "Saída";
 
                   return (
                     <tr key={item.id}>
-                      <td>{item.dataHora}</td>
+                      <td>{formatarData(item.data_hora)}</td>
                       <td>
                         <span className={`${styles.statusBadge} ${badgeClass}`}>
                           <span className={styles.badgeIcon}>
                             <Icon size={14} />
                           </span>
-                          {item.movimento}
+                          {movimentoLabel}
                         </span>
                       </td>
-                      <td>{item.produto}</td>
-                      <td>{item.sku}</td>
+                      <td>{item.produto_nome}</td>
+                      <td>{item.produto_sku}</td>
                       <td className={`${styles.centered} ${styles.quantityCell}`}>
                         <strong>{item.quantidade}</strong> un.
                       </td>
+                      <td>{item.usuario_nome || "Sistema"}</td>
+                      <td>{item.motivo || "—"}</td>
                     </tr>
                   );
                 })}
@@ -186,3 +178,4 @@ export function HistoricoMovimentacao() {
     </div>
   );
 }
+

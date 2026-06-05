@@ -1259,3 +1259,33 @@ Lista todas as operações de Entrada e Saída executadas para um produto espec�
           "sucesso": true
         }
         ```
+
+---
+
+### 5.4. Listar Todas as Movimentações
+Lista todas as operações de Entrada e Saída executadas no estoque de todos os produtos do sistema, incluindo os dados detalhados do produto e do usuário responsável, com ordenação decrescente (da mais recente para a mais antiga).
+
+*   **Método:** `GET`
+*   **URL:** `/api/estoque/movimentacoes`
+*   **Autenticação:** Não necessária no arquivo de rotas (Pública)
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "movimentacoes": [
+            {
+              "id": 48,
+              "produto_id": 15,
+              "usuario_id": 10,
+              "quantidade": 10,
+              "tipo": 2,
+              "motivo": "Perda por avaria na capa",
+              "data_hora": "2026-05-31T22:15:00.000Z",
+              "produto_nome": "Caderno Universitário Tilibra 10 Matérias",
+              "produto_sku": "TIL-CAD-10M",
+              "usuario_nome": "João da Silva"
+            }
+          ],
+          "sucesso": true
+        }
+        ```
