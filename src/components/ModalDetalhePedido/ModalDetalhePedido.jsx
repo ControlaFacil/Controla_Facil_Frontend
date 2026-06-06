@@ -99,7 +99,100 @@ export function ModalDetalhePedido({ isOpen, onClose, pedidoId }) {
     fetchPedidoDetalhes();
   }, [isOpen, pedidoId, onClose]);
 
+  // Cálculo das Comissões do canal e Repasse Líquido
+  const financeiro = React.useMemo(() => {
+    if (!pedido || !pedido.itens) return { bruto: 0, taxas: 0, liquido: 0, aproveitamento: 0 };
+    
+    const bruto = Number(pedido.total || 0);
+    const taxas = pedido.itens.reduce((acc, item) => {
+      const unitFee = Number(item.tarifa_venda || 0);
+      return acc + (unitFee * item.quantidade);
+    }, 0);
+    
+    const liquido = Math.max(0, bruto - taxas);
+    const aproveitamento = bruto > 0 ? (liquido / bruto) * 100 : 0;
+    
+    return { bruto, taxas, liquido, aproveitamento };
+  }, [pedido]);
+
   if (!isOpen) return null;
+
+  // Renderização da Timeline Dinâmica com 2/3 marcos baseados nos dados disponíveis
+  const renderTimeline = () => {
+    if (!pedido) return null;
+    const status = pedido.status_pedido ? pedido.status_pedido.toLowerCase() : '';
+    
+    const steps = [
+      {
+        title: 'Pedido Recebido',
+        date: formatDate(pedido.data_pedido),
+        completed: true,
+        active: true
+      }
+    ];
+
+    if (status === 'cancelled') {
+      steps.push({
+        title: 'Pedido Cancelado',
+        date: formatDate(pedido.data_atualizacao_status),
+        completed: true,
+        active: true,
+        isCancelled: true
+      });
+    } else {
+      const isPaidOrBeyond = ['paid', 'shipped', 'delivered'].includes(status);
+      steps.push({
+        title: isPaidOrBeyond ? 'Pagamento Aprovado' : 'Aguardando Pagamento',
+        date: isPaidOrBeyond ? formatDate(pedido.data_atualizacao_status) : null,
+        completed: isPaidOrBeyond,
+        active: isPaidOrBeyond
+      });
+
+      const isShipped = status === 'shipped';
+      const isDelivered = status === 'delivered';
+      
+      let logisticsTitle = 'Aguardando Envio';
+      let logisticsDate = null;
+      
+      if (isDelivered) {
+        logisticsTitle = 'Entregue';
+        logisticsDate = formatDate(pedido.data_atualizacao_status);
+      } else if (isShipped) {
+        logisticsTitle = 'Despachado';
+        logisticsDate = formatDate(pedido.data_atualizacao_status);
+      }
+
+      steps.push({
+        title: logisticsTitle,
+        date: logisticsDate,
+        completed: isDelivered || isShipped,
+        active: isPaidOrBeyond
+      });
+    }
+
+    return (
+      <div className={styles.timelineContainer}>
+        <h3>Acompanhamento de Status</h3>
+        <div className={styles.timeline}>
+          {steps.map((step, idx) => (
+            <div 
+              key={idx} 
+              className={`${styles.timelineStep} ${step.completed ? styles.completed : ''} ${step.active ? styles.active : ''} ${step.isCancelled ? styles.cancelledStep : ''}`}
+            >
+              <div className={styles.timelineMarker}>
+                <div className={styles.timelineMarkerDot} />
+                {idx < steps.length - 1 && <div className={styles.timelineLine} />}
+              </div>
+              <div className={styles.timelineInfo}>
+                <span className={styles.stepTitle}>{step.title}</span>
+                {step.date && <span className={styles.stepDate}>{step.date}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={styles.modalOverlay}>
@@ -125,6 +218,10 @@ export function ModalDetalhePedido({ isOpen, onClose, pedidoId }) {
           </div>
         ) : pedido ? (
           <div className={styles.modalBody}>
+            
+            {/* Timeline */}
+            {renderTimeline()}
+
             {/* Grid de Resumo */}
             <div className={styles.summaryGrid}>
               {/* Cliente */}
@@ -185,6 +282,27 @@ export function ModalDetalhePedido({ isOpen, onClose, pedidoId }) {
                   <p><strong>Última Atualização:</strong> {formatDate(pedido.data_atualizacao_status)}</p>
                   <p className={styles.totalDestaque}><strong>Valor Total:</strong> {formatCurrency(pedido.total)}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Resumo Financeiro / Margens de Repasse */}
+            <div className={styles.financeiroGrid}>
+              <div className={`${styles.financialCard} ${styles.bruto}`}>
+                <label>Faturamento Bruto</label>
+                <div className={styles.financialValue}>{formatCurrency(financeiro.bruto)}</div>
+                <span className={styles.financialSubtext}>Valor total pago pelo cliente</span>
+              </div>
+              <div className={`${styles.financialCard} ${styles.taxas}`}>
+                <label>Taxas do Canal (ML)</label>
+                <div className={styles.financialValue}>{formatCurrency(financeiro.taxas)}</div>
+                <span className={styles.financialSubtext}>Tarifas de comissão de venda</span>
+              </div>
+              <div className={`${styles.financialCard} ${styles.liquido}`}>
+                <label>Repasse Líquido Estimado</label>
+                <div className={styles.financialValue}>{formatCurrency(financeiro.liquido)}</div>
+                <span className={styles.financialSubtext} style={{ color: '#5FC16C', fontWeight: 700 }}>
+                  Aproveitamento de {financeiro.aproveitamento.toFixed(1)}% do pedido
+                </span>
               </div>
             </div>
 

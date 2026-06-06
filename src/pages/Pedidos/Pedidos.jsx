@@ -53,6 +53,9 @@ export function Pedidos() {
   const [statusFiltro, setStatusFiltro] = useState(null);
   const [busca, setBusca] = useState('');
 
+  // Dropdown de Exportação
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+
   // Modal de Detalhes
   const [pedidoIdSelecionado, setPedidoIdSelecionado] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,7 +85,6 @@ export function Pedidos() {
     try {
       setLoading(true);
       const token = localStorage.getItem("authToken");
-      // Buscamos um número razoável de pedidos recentes para filtrar no frontend
       const response = await fetch(`${API_BASE_URL}/pedidos?limite=200`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -103,6 +105,14 @@ export function Pedidos() {
   useEffect(() => {
     carregarPedidos();
   }, []);
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    if (!isExportDropdownOpen) return;
+    const handleOutsideClick = () => setIsExportDropdownOpen(false);
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [isExportDropdownOpen]);
 
   // Filtrar pedidos por integração para calcular as estatísticas contextuais
   const pedidosPorIntegracao = useMemo(() => {
@@ -174,6 +184,137 @@ export function Pedidos() {
 
   const handleLimparFiltroStatus = () => {
     setStatusFiltro(null);
+  };
+
+  const toggleExportDropdown = (e) => {
+    e.stopPropagation();
+    setIsExportDropdownOpen(!isExportDropdownOpen);
+  };
+
+  // Exportar dados filtrados para CSV
+  const handleExportCSV = () => {
+    if (pedidosExibidos.length === 0) {
+      toast.warning("Nenhum pedido para exportar.");
+      return;
+    }
+
+    const headers = ["ID Pedido", "ID Mercado Livre", "Comprador", "Data", "Valor Total", "Status"];
+    const rows = pedidosExibidos.map(p => [
+      p.id,
+      p.id_pedido_ml || "—",
+      p.nome_completo_comprador || p.apelido_comprador || "—",
+      new Date(p.data_pedido).toLocaleDateString('pt-BR'),
+      p.total.toFixed(2).replace('.', ','),
+      mapStatus(p.status_pedido)
+    ]);
+
+    const csvString = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `relatorio_pedidos_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("CSV exportado com sucesso!");
+  };
+
+  // Exportar/Imprimir dados filtrados em PDF
+  const handleExportPDF = () => {
+    if (pedidosExibidos.length === 0) {
+      toast.warning("Nenhum pedido para imprimir.");
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Por favor, permita pop-ups para imprimir o relatório.");
+      return;
+    }
+
+    const integracaoNome = integracaoSelecionada === 'todas' 
+      ? 'Todas as Integrações' 
+      : integracoes.find(i => String(i.id) === String(integracaoSelecionada))?.nome || '';
+
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Relatório de Pedidos - Controla Fácil</title>
+          <style>
+            body { font-family: sans-serif; color: #333; padding: 20px; }
+            h1 { color: #0C3447; font-size: 24px; margin-bottom: 5px; }
+            p { font-size: 14px; color: #64748b; margin-top: 0; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: left; font-size: 13px; }
+            th { background-color: #f8fafc; color: #0C3447; font-weight: bold; }
+            .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+            .pendente { background: #fffbeb; color: #d97706; }
+            .pago { background: #e8f5e9; color: #2ecc71; }
+            .cancelado { background: #fef2f2; color: #ef4444; }
+            .enviado { background: #e0f2fe; color: #0284c7; }
+            .entregue { background: #ecfdf5; color: #10b981; }
+            .header-info { display: flex; justify-content: space-between; border-bottom: 2px solid #0C3447; padding-bottom: 15px; }
+            .total-box { margin-top: 30px; text-align: right; font-size: 16px; font-weight: bold; color: #0C3447; }
+          </style>
+        </head>
+        <body>
+          <div class="header-info">
+            <div>
+              <h1>Relatório de Pedidos</h1>
+              <p>Gerado em ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+            <div style="text-align: right;">
+              <h3 style="color: #5FC16C; margin: 0;">Controla Fácil</h3>
+              <span style="font-size: 12px; color: #64748b;">Integração: ${integracaoNome}</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Pedido</th>
+                <th>ID Mercado Livre</th>
+                <th>Cliente</th>
+                <th>Data</th>
+                <th>Valor Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pedidosExibidos.map(p => `
+                <tr>
+                  <td><strong>#${p.id}</strong></td>
+                  <td>${p.id_pedido_ml || '—'}</td>
+                  <td>${p.nome_completo_comprador || p.apelido_comprador || '—'}</td>
+                  <td>${new Date(p.data_pedido).toLocaleDateString('pt-BR')}</td>
+                  <td>R$ ${p.total.toFixed(2).replace('.', ',')}</td>
+                  <td>
+                    <span class="badge ${mapStatus(p.status_pedido).toLowerCase().replace('em separação', 'pago').replace('separacao', 'pago')}">
+                      ${mapStatus(p.status_pedido)}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div class="total-box">
+            <span>Total dos Pedidos Filtrados: R$ ${pedidosExibidos.reduce((acc, p) => acc + p.total, 0).toFixed(2).replace('.', ',')}</span>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              }
+            }
+          </script>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   return (
@@ -273,6 +414,29 @@ export function Pedidos() {
               style={{ color: '#94a3b8', cursor: 'pointer' }} 
               onClick={() => setBusca('')}
             />
+          )}
+        </div>
+
+        {/* Botão de Exportação */}
+        <div className={styles.exportWrapper}>
+          <button 
+            className={styles.btnExport}
+            onClick={toggleExportDropdown}
+            title="Exportar dados filtrados"
+          >
+            <span>Exportar Relatório</span>
+            <ChevronDown size={16} />
+          </button>
+          
+          {isExportDropdownOpen && (
+            <div className={styles.exportDropdown}>
+              <button onClick={() => { handleExportCSV(); setIsExportDropdownOpen(false); }}>
+                Exportar para CSV (Excel)
+              </button>
+              <button onClick={() => { handleExportPDF(); setIsExportDropdownOpen(false); }}>
+                Imprimir / Salvar PDF
+              </button>
+            </div>
           )}
         </div>
 
