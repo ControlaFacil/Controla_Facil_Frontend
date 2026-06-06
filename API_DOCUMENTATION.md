@@ -1289,3 +1289,158 @@ Lista todas as operações de Entrada e Saída executadas no estoque de todos os
           "sucesso": true
         }
         ```
+
+---
+
+## 📁 6. Pedidos (`src/features/pedidos`)
+
+Módulo para gerenciamento e consulta de pedidos consolidados importados de marketplaces integrados.
+
+### 6.1. Listar Pedidos
+Retorna uma lista paginada de todos os pedidos importados vinculados ao usuário autenticado, com suporte a filtros e busca.
+
+*   **Método:** `GET`
+*   **URL:** `/api/pedidos`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Query:**
+
+    | Parâmetro | Tipo | Obrigatório? | Descrição |
+    | :--- | :--- | :--- | :--- |
+    | `status` | String | Não | Filtra pedidos pelo status específico (ex: `paid`, `cancelled`, `pending`). |
+    | `busca` | String | Não | Busca textual pelo ID do pedido, apelido ou nome do comprador (busca parcial via `LIKE`). |
+    | `limite` | Integer | Não | Limite de registros por página. Padrão: `10`. |
+    | `pagina` | Integer | Não | Número da página. Padrão: `1`. |
+
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "pagina": 1,
+          "limite": 10,
+          "total": 45,
+          "pedidos": [
+            {
+              "id": 12,
+              "id_pedido_ml": "2000016796107272",
+              "data_pedido": "2026-06-05T21:35:40.000Z",
+              "total": 1500.00,
+              "status_pedido": "paid",
+              "data_atualizacao_status": "2026-06-05T21:44:00.000Z",
+              "usuario_id": 1,
+              "integracao_id": 2,
+              "id_comprador_ml": "3451278614",
+              "apelido_comprador": "TESTUSER795835",
+              "nome_completo_comprador": "Test Test",
+              "id_envio_ml": null,
+              "forma_pagamento": "credit_card",
+              "metodo_pagamento": "master",
+              "quantidade_itens": 1
+            }
+          ]
+        }
+        ```
+    *   **401 Unauthorized:** Token inválido ou ausente.
+    *   **500 Internal Server Error:** Erro ao listar os pedidos no banco de dados.
+
+---
+
+### 6.2. Obter Detalhes do Pedido
+Retorna as informações completas e detalhadas de um pedido específico, incluindo os itens comprados e o vínculo com os produtos locais.
+
+*   **Método:** `GET`
+*   **URL:** `/api/pedidos/:id`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `id` (Integer, Obrigatório): ID do pedido local no sistema.
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "pedido": {
+            "id": 12,
+            "id_pedido_ml": "2000016796107272",
+            "data_pedido": "2026-06-05T21:35:40.000Z",
+            "total": 1500.00,
+            "status_pedido": "paid",
+            "data_atualizacao_status": "2026-06-05T21:44:00.000Z",
+            "usuario_id": 1,
+            "integracao_id": 2,
+            "id_comprador_ml": "3451278614",
+            "apelido_comprador": "TESTUSER795835",
+            "nome_completo_comprador": "Test Test",
+            "id_envio_ml": null,
+            "forma_pagamento": "credit_card",
+            "metodo_pagamento": "master",
+            "itens": [
+              {
+                "id": 44,
+                "ml_item_id": "MLB4739201955",
+                "titulo_item": "Tablet Xaiomi Redmi Pad 2 11'' 256gb 8 Ram Wi-fi",
+                "quantidade": 1,
+                "preco_unitario": 1500.00,
+                "valor_desconto_item": 0.00,
+                "tarifa_venda": 165.00,
+                "produto_id": 8,
+                "produto_local": {
+                  "id": 8,
+                  "sku": "TAB-XI-002",
+                  "nome": "Redmi Pad 2 256GB"
+                }
+              }
+            ]
+          }
+        }
+        ```
+    *   **400 Bad Request:** ID de pedido fornecido é inválido.
+    *   **401 Unauthorized:** Token inválido ou ausente.
+    *   **404 Not Found:** Pedido não encontrado ou não pertencente ao usuário autenticado.
+
+---
+
+## 📁 7. Webhooks (`src/features/webhooks`)
+
+Porta de entrada pública para notificações automáticas de sistemas e marketplaces terceiros.
+
+### 7.1. Receber Webhook Mercado Livre
+Endpoint público configurado nas aplicações do Mercado Livre para recepção de notificações de eventos em tempo real.
+
+*   **Método:** `POST`
+*   **URL:** `/api/webhooks/mercado-livre`
+*   **Autenticação:** Não necessária (Pública)
+*   **Headers:**
+    *   `Content-Type: application/json`
+*   **Corpo da Requisição (JSON):**
+    
+    | Campo | Tipo | Obrigatório? | Descrição |
+    | :--- | :--- | :--- | :--- |
+    | `resource` | String | **Sim** | O caminho da API do ML do recurso modificado (ex: `/orders/2000016796107272`). |
+    | `user_id` | Long | **Sim** | O ID de usuário do proprietário do recurso no Mercado Livre (usado para encontrar o Tenant correspondente). |
+    | `topic` | String | **Sim** | O tópico da notificação (ex: `orders`, `orders_v2`, `items`). |
+    | `application_id`| Long | Não | ID do aplicativo do Mercado Livre gerador do evento. |
+
+    *Exemplo de envio:*
+    ```json
+    {
+      "_id": "24d2855b-c65a-43ec-be17-525fb017e4a6",
+      "topic": "orders_v2",
+      "resource": "/orders/2000016796107272",
+      "user_id": 3430803000,
+      "application_id": 6456467593802500,
+      "sent": "2026-06-05T21:57:45.179Z",
+      "attempts": 1,
+      "received": "2026-06-05T21:35:46.216Z"
+    }
+    ```
+
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "received": true
+        }
+        ```
+    
+    > [!IMPORTANT]
+    > **Aviso de Processamento Assíncrono:** Este endpoint retorna `200 OK` **imediatamente** após receber a notificação, liberando os servidores do Mercado Livre e evitando retentativas desnecessárias. O processamento real da integração (atualizações do banco e movimentação de estoque) é executado em segundo plano (assincronamente).
