@@ -1444,3 +1444,290 @@ Endpoint público configurado nas aplicações do Mercado Livre para recepção 
     
     > [!IMPORTANT]
     > **Aviso de Processamento Assíncrono:** Este endpoint retorna `200 OK` **imediatamente** após receber a notificação, liberando os servidores do Mercado Livre e evitando retentativas desnecessárias. O processamento real da integração (atualizações do banco e movimentação de estoque) é executado em segundo plano (assincronamente).
+
+---
+
+## 📁 8. Relatórios (`src/features/relatorios`)
+
+Módulo responsável por agregar dados de faturamento, vendas, estoque e clientes, fornecendo relatórios consolidados e permitindo a criação e persistência de relatórios personalizados com queries dinâmicas seguras.
+
+### 8.1. Obter Dashboard Geral
+Retorna métricas consolidadas básicas de faturamento total, total de pedidos, ticket médio, produtos ativos e produtos com estoque crítico.
+
+*   **Método:** `GET`
+*   **URL:** `/api/relatorios/dashboard`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Query:**
+    
+    | Parâmetro | Tipo | Obrigatório? | Descrição |
+    | :--- | :--- | :--- | :--- |
+    | `integracao_id` | Integer | Não | Filtra as métricas especificamente para uma integração de marketplace. |
+
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "data": {
+            "faturamentoTotal": 3000.00,
+            "totalPedidosPaid": 2,
+            "ticketMedio": 1500.00,
+            "totalProdutosAtivos": 1,
+            "produtosEstoqueCritico": 0
+          }
+        }
+        ```
+    *   **401 Unauthorized:** Token inválido ou ausente.
+
+---
+
+### 8.2. Obter Relatório Pré-definido
+Retorna conjuntos de dados detalhados para relatórios pré-definidos de Produtos, Pedidos ou Clientes.
+
+*   **Método:** `GET`
+*   **URL:** `/api/relatorios/predefinido/:tipo`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `tipo` (String, Obrigatório): Tipo do relatório. Deve ser `produtos`, `pedidos` ou `clientes`.
+*   **Parâmetros de Query:**
+    
+    | Parâmetro | Tipo | Obrigatório? | Descrição |
+    | :--- | :--- | :--- | :--- |
+    | `integracao_id` | Integer | Não | Filtra os dados por integração de marketplace específica. |
+    | `categoria_id` | Integer | Não | Filtra produtos por categoria (válido para o tipo `produtos`). |
+    | `data_inicio` | String (AAAA-MM-DD) | Não | Filtra pedidos a partir desta data (válido para o tipo `pedidos`). |
+    | `data_fim` | String (AAAA-MM-DD) | Não | Filtra pedidos até esta data (válido para o tipo `pedidos`). |
+
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso) - Tipo `produtos`:**
+        ```json
+        {
+          "sucesso": true,
+          "data": {
+            "resumoEstoque": {
+              "valorTotalEstoque": 88500.00,
+              "totalItensEstoque": 59
+            },
+            "produtosMaisVendidos": [
+              {
+                "produto_id": 8,
+                "nome": "Redmi Pad 2 256GB",
+                "totalVendido": 1,
+                "faturamentoProduto": 1500.00
+              }
+            ]
+          }
+        }
+        ```
+    *   **200 OK (Sucesso) - Tipo `pedidos`:**
+        ```json
+        {
+          "sucesso": true,
+          "data": {
+            "vendasPeriodo": [
+              {
+                "data": "2026-06-05",
+                "faturamento": 3000.00,
+                "totalPedidos": 2
+              }
+            ],
+            "vendasPorIntegracao": [
+              {
+                "integracao_nome": "Minha Loja ML",
+                "faturamento": 3000.00,
+                "totalPedidos": 2
+              }
+            ]
+          }
+        }
+        ```
+    *   **200 OK (Sucesso) - Tipo `clientes`:**
+        ```json
+        {
+          "sucesso": true,
+          "data": [
+            {
+              "id_comprador_ml": "3451278614",
+              "apelido_comprador": "TESTUSER795835",
+              "nome_completo_comprador": "Test Test",
+              "totalPedidos": 2,
+              "totalGasto": 3000.00
+            }
+          ]
+        }
+        ```
+    *   **400 Bad Request:** Tipo de relatório inválido fornecido na rota.
+
+---
+
+### 8.3. Salvar Relatório Personalizado
+Salva as configurações de um relatório customizado (filtros e colunas) na base de dados para execução futura.
+
+*   **Método:** `POST`
+*   **URL:** `/api/relatorios/personalizados`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Corpo da Requisição (JSON):**
+    
+    | Campo | Tipo | Obrigatório? | Descrição |
+    | :--- | :--- | :--- | :--- |
+    | `nome` | String | **Sim** | Nome identificador do relatório personalizado. |
+    | `descricao` | String | Não | Descrição detalhada do propósito do relatório. |
+    | `tipo` | String | **Sim** | Tipo base do relatório. Deve ser `produtos` ou `pedidos`. |
+    | `filtros` | Objeto | **Sim** | Filtros adicionais salvos (como `precoMin`, `precoMax`, `data_inicio`, `data_fim`, etc.). |
+    | `colunas` | Array de Strings | **Sim** | Lista de colunas a serem exibidas nos resultados (utiliza whitelist interna do backend). |
+    | `integracao_id` | Integer | Não | ID da integração de marketplace associada, se houver. |
+
+    *Exemplo de envio:*
+    ```json
+    {
+      "nome": "Relatório de Produtos de Alto Custo",
+      "descricao": "Produtos ativos com preço maior que R$ 1000,00",
+      "tipo": "produtos",
+      "filtros": {
+        "precoMin": 1000
+      },
+      "colunas": ["nome", "sku", "preco", "qtd_disponivel"],
+      "integracao_id": 2
+    }
+    ```
+
+*   **Retornos da Requisição:**
+    *   **201 Created (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "mensagem": "Relatório personalizado salvo com sucesso!",
+          "data": {
+            "id": 1
+          }
+        }
+        ```
+    *   **400 Bad Request:** Parâmetros obrigatórios ausentes ou tipo de relatório inválido.
+
+---
+
+### 8.4. Listar Relatórios Personalizados Salvos
+Retorna todos os relatórios personalizados cadastrados pelo usuário autenticado que não foram excluídos.
+
+*   **Método:** `GET`
+*   **URL:** `/api/relatorios/personalizados`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "data": [
+            {
+              "id": 1,
+              "nome": "Relatório de Produtos de Alto Custo",
+              "descricao": "Produtos ativos com preço maior que R$ 1000,00",
+              "tipo": "produtos",
+              "filtros": {
+                "precoMin": 1000
+              },
+              "colunas": [
+                "nome",
+                "sku",
+                "preco",
+                "qtd_disponivel"
+              ],
+              "usuario_id": 5,
+              "integracao_id": 2,
+              "data_criacao": "2026-06-07T12:00:00.000Z",
+              "data_atualizacao": "2026-06-07T12:00:00.000Z",
+              "excluido": false,
+              "integracao_nome": "Minha Loja ML"
+            }
+          ]
+        }
+        ```
+
+---
+
+### 8.5. Executar Relatório Personalizado
+Recupera a configuração de um relatório personalizado por ID e executa a query dinâmica no banco de dados na hora, retornando os metadados do relatório junto com os registros calculados atuais.
+
+*   **Método:** `GET`
+*   **URL:** `/api/relatorios/personalizados/:id`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `id` (Integer, Obrigatório): ID do relatório personalizado a ser executado.
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "relatorio": {
+            "id": 1,
+            "nome": "Relatório de Produtos de Alto Custo",
+            "descricao": "Produtos ativos com preço maior que R$ 1000,00",
+            "tipo": "produtos",
+            "filtros": {
+              "precoMin": 1000
+            },
+            "colunas": [
+              "nome",
+              "sku",
+              "preco",
+              "qtd_disponivel"
+            ],
+            "usuario_id": 5,
+            "integracao_id": 2,
+            "data_criacao": "2026-06-07T12:00:00.000Z",
+            "data_atualizacao": "2026-06-07T12:00:00.000Z",
+            "excluido": false
+          },
+          "data": [
+            {
+              "nome": "Redmi Pad 2 256GB",
+              "sku": "TAB-XI-002",
+              "preco": 1500.00,
+              "qtd_disponivel": 59
+            }
+          ]
+        }
+        ```
+    *   **404 Not Found:** Relatório personalizado não encontrado ou pertencente a outro usuário.
+
+---
+
+### 8.6. Atualizar Relatório Personalizado
+Edita a configuração salva de um relatório personalizado existente.
+
+*   **Método:** `PUT`
+*   **URL:** `/api/relatorios/personalizados/:id`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `id` (Integer, Obrigatório): ID do relatório a ser editado.
+*   **Corpo da Requisição (JSON):** Igual ao corpo do endpoint de cadastro (`POST /api/relatorios/personalizados`).
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "mensagem": "Relatório personalizado atualizado com sucesso!"
+        }
+        ```
+    *   **404 Not Found:** Relatório personalizado não encontrado.
+
+---
+
+### 8.7. Excluir Relatório Personalizado
+Executa a exclusão lógica (soft-delete) de um relatório personalizado.
+
+*   **Método:** `DELETE`
+*   **URL:** `/api/relatorios/personalizados/:id`
+*   **Autenticação:** **Exigida** (JWT Bearer Token)
+*   **Parâmetros de Rota:**
+    *   `id` (Integer, Obrigatório): ID do relatório a ser excluído.
+*   **Retornos da Requisição:**
+    *   **200 OK (Sucesso):**
+        ```json
+        {
+          "sucesso": true,
+          "mensagem": "Relatório personalizado excluído com sucesso!"
+        }
+        ```
+    *   **404 Not Found:** Relatório personalizado não encontrado.
+
