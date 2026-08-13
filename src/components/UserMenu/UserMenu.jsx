@@ -13,7 +13,7 @@ export function UserMenu({ onClose }) {
 
     const handleSair = () => {
         // Implemente aqui a lógica de logout (limpar token/sessão)
-        navigate("/");
+        navigate("/login");
         onClose();
     };
 

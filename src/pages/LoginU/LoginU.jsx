@@ -1,15 +1,25 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import styles from "./LoginU.module.css";
 import { API_BASE_URL } from "../../api"
 
 export function LoginU() {
   const navigate = useNavigate();
-  const [login, setLogin] = useState("");
+  const location = useLocation();
+  const [login, setLogin] = useState(location.state?.adminEmail || "");
   const [senha, setSenha] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.provisioned) {
+      setMessage({
+        type: 'success',
+        text: `Instância '${location.state.subdomain}.controlafacil.com.br' implantada com sucesso! Faça o primeiro acesso com a senha temporária: CF-@Admin2026`
+      });
+    }
+  }, [location.state]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

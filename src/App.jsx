@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { HeaderU } from "./components/HeaderU";
 import { HomeU } from "./pages/HomeU";
 import { LoginU } from "./pages/LoginU";
+import { LandingPage } from "./pages/LandingPage";
 import { Cadastro } from "./pages/Cadastro";
 import { MeusDados } from "./pages/MeusDados";
 import { CadastroParceiro } from "./pages/CadastroParceiro";
@@ -23,7 +24,7 @@ import './global.css';
 function LayoutWithHeader() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const location = useLocation();
-  const hideHeaderOnRoutes = ["/", "/cadastro", "/email-confirmacao", "/email-validado", "/email-falha-validacao", "/ml-auth-success", "/ml-auth-error", "/ml-callback"];
+  const hideHeaderOnRoutes = ["/", "/login", "/cadastro", "/email-confirmacao", "/email-validado", "/email-falha-validacao", "/ml-auth-success", "/ml-auth-error", "/ml-callback"];
 
   useEffect(() => {
     if (isSidebarCollapsed) {
@@ -43,7 +44,8 @@ function LayoutWithHeader() {
       )}
       <main className="content-wrapper">
         <Routes>
-          <Route path="/" element={<LoginU />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginU />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/dashboard" element={<DashboardEstoque />} />
           <Route path="/home" element={<HomeU />} />
