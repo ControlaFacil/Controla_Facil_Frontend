@@ -1,4 +1,4 @@
-import styles from './DashboardEstoque.module.css';
+import styles from './DashBoardEstoque.module.css';
 import { Package, AlertTriangle, XCircle, DollarSign, ArrowRight } from 'lucide-react'; // Importando ícones Lucide
 
 export function DashboardEstoque() {
